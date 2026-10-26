@@ -92,6 +92,18 @@ describe('collectSnapshot', () => {
     expect(calls.every((fn) => /_get_/.test(fn))).toBe(true);
   });
 
+  it('повідомляє про етапи завантаження по порядку, без повторів', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (_url: string, init: RequestInit) => json(responses[new URLSearchParams(String(init.body)).get('wsfunction')!])),
+    );
+    const stages: string[] = [];
+    await collectSnapshot('https://m.edu', 'tok', (p) => {
+      if (stages[stages.length - 1] !== p.stage) stages.push(p.stage);
+    });
+    expect(stages).toEqual(['courses', 'tasks', 'statuses']);
+  });
+
   it('розпізнає застарілий токен', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => json({ exception: 'x', errorcode: 'invalidtoken', message: 'Invalid token' })));
     const err = await collectSnapshot('https://m.edu', 'old').catch((e) => e);

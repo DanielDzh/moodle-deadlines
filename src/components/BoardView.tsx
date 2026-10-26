@@ -1,11 +1,12 @@
 import { useCallback, useMemo } from 'react';
 import { BURN_DAYS, KEYS } from '../config';
 import { useStoredState } from '../hooks/useStoredState';
-import { useToday } from '../hooks/useToday';
+import { useMinute } from '../hooks/useMinute';
 import { buildBoard } from '../lib/board';
 import { fmtDateTime, fmtDayLong } from '../lib/dates';
 import type { Course, Snapshot, Theme } from '../types';
 import { BandSection } from './BandSection';
+import { DonateLink } from './DonateLink';
 import { Filters } from './Filters';
 import { Summary } from './Summary';
 
@@ -17,7 +18,6 @@ const THEME_LABEL: Record<Theme, string> = {
 
 interface Props {
   snapshot: Snapshot;
-  progress: string;
   error: string;
   theme: Theme;
   onNextTheme: () => void;
@@ -36,8 +36,8 @@ function burnDaysFromUrl(): number {
   return BURN_DAYS;
 }
 
-export function BoardView({ snapshot, progress, error, theme, onNextTheme, onLogout }: Props) {
-  const today = useToday();
+export function BoardView({ snapshot, error, theme, onNextTheme, onLogout }: Props) {
+  const minute = useMinute();
   const [done, setDone] = useStoredState<Record<string, boolean>>(KEYS.done, {});
   const [hideDone, setHideDone] = useStoredState(KEYS.hideDone, false);
   const [hideSubmitted, setHideSubmitted] = useStoredState(KEYS.hideSubmitted, true);
@@ -47,8 +47,8 @@ export function BoardView({ snapshot, progress, error, theme, onNextTheme, onLog
 
   const board = useMemo(
     () => buildBoard(snapshot, { done, filter, hideDone, hideSubmitted, burnDays }),
-    // today у залежностях — щоб опівночі все перерахувалося
-    [snapshot, done, filter, hideDone, hideSubmitted, burnDays, today],
+    // minute у залежностях — щоб залишок годин і дні перераховувалися самі
+    [snapshot, done, filter, hideDone, hideSubmitted, burnDays, minute],
   );
   const courses = useMemo(() => new Map<number, Course>(snapshot.courses.map((c) => [c.id, c])), [snapshot]);
 
@@ -84,9 +84,7 @@ export function BoardView({ snapshot, progress, error, theme, onNextTheme, onLog
           <p className="who">{snapshot.user}</p>
         </div>
         <div className="actions">
-          <span className="progress" role="status">
-            {progress}
-          </span>
+          <DonateLink variant="icon" />
           <button type="button" className="btn ghost" onClick={onNextTheme}>
             {THEME_LABEL[theme]}
           </button>

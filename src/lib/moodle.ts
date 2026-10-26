@@ -1,5 +1,5 @@
 import { COURSE_COLORS, DATA_VERSION } from '../config';
-import type { Course, Snapshot, Task } from '../types';
+import type { Course, LoadProgress, Snapshot, Task } from '../types';
 import { toText } from './text';
 import { normSite, safeUrl } from './url';
 
@@ -100,15 +100,14 @@ const nowSec = () => Math.floor(Date.now() / 1000);
 export async function collectSnapshot(
   site: string,
   token: string,
-  onProgress: (text: string) => void = () => {},
+  onProgress: (progress: LoadProgress) => void = () => {},
 ): Promise<Snapshot> {
   const ws = createClient(site, token);
 
-  onProgress('Перевіряю вхід…');
+  onProgress({ stage: 'courses' });
   const info = await ws<{ siteurl?: string; userid: number; fullname: string }>('core_webservice_get_site_info');
   const base = safeUrl(normSite(info.siteurl || site), site).replace(/\/+$/, '');
 
-  onProgress('Завантажую поточні курси…');
   const now = nowSec();
   const isCurrent = (c: any) =>
     (!c.startdate || c.startdate <= now) && (!c.enddate || c.enddate > now) && !c.completed && !c.hidden;
@@ -145,7 +144,7 @@ export async function collectSnapshot(
   });
   if (!ids.length) return snapshot([]);
 
-  onProgress('Завантажую завдання, форуми й події календаря…');
+  onProgress({ stage: 'tasks' });
   const [asg, forums, evs] = await Promise.all([
     ws<{ courses?: any[] }>('mod_assign_get_assignments', { courseids: ids }).catch(() => ({ courses: [] as any[] })),
     ws<any[]>('mod_forum_get_forums_by_courses', { courseids: ids }).catch(() => [] as any[]),
@@ -230,7 +229,7 @@ export async function collectSnapshot(
 
   const assigns = items.filter((i) => i.kind === 'assign');
   let n = 0;
-  onProgress(`Статуси подань: 0 з ${assigns.length}`);
+  onProgress({ stage: 'statuses', done: 0, total: assigns.length });
   await pool(assigns, 4, async (it) => {
     try {
       const s = await ws<any>('mod_assign_get_submission_status', { assignid: it.assignid });
@@ -242,7 +241,7 @@ export async function collectSnapshot(
     } catch {
       it.status = 'unknown';
     }
-    onProgress(`Статуси подань: ${++n} з ${assigns.length}`);
+    onProgress({ stage: 'statuses', done: ++n, total: assigns.length });
   });
 
   return snapshot(items);

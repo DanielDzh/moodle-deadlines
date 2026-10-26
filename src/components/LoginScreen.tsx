@@ -1,18 +1,13 @@
-import { useState, type FormEvent } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { DEFAULT_SITE } from '../config';
 import { getToken } from '../lib/moodle';
 import { checkSite, hostOf, normSite } from '../lib/url';
-
-interface Props {
-  site: string;
-  remember: boolean;
-  message?: string;
-  onLoggedIn: (session: { site: string; token: string; remember: boolean }) => void;
-}
+import type { LoginScreenProps } from '../types';
 
 type PasswordCredentialCtor = new (data: { id: string; password: string; name?: string }) => Credential;
 
 /** Просимо браузер запам'ятати пароль для цього сайту (Chrome, Edge, Opera). */
-async function offerToSavePassword(user: string, pass: string) {
+const offerToSavePassword = async (user: string, pass: string) => {
   const PC = (globalThis as unknown as { PasswordCredential?: PasswordCredentialCtor }).PasswordCredential;
   if (!PC || !navigator.credentials) return;
   try {
@@ -20,13 +15,17 @@ async function offerToSavePassword(user: string, pass: string) {
   } catch {
     /* браузер відмовився — нічого страшного */
   }
-}
+};
 
-export function LoginScreen({ site, remember: rememberInitial, message = '', onLoggedIn }: Props) {
+export const LoginScreen = ({ site, remember: rememberInitial, message = '', onLoggedIn }: LoginScreenProps) => {
   const [error, setError] = useState(message);
   const [busy, setBusy] = useState(false);
+  const [siteInput, setSiteInput] = useState(site);
+  const currentSite = normSite(siteInput);
 
-  async function onSubmit(e: FormEvent<HTMLFormElement>) {
+  const handleSiteChange = (e: ChangeEvent<HTMLInputElement>) => setSiteInput(e.target.value);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const f = new FormData(form);
@@ -54,31 +53,16 @@ export function LoginScreen({ site, remember: rememberInitial, message = '', onL
       const pw = form.elements.namedItem('password');
       if (pw instanceof HTMLInputElement) pw.value = '';
     }
-  }
+  };
 
   return (
     <main className="login">
       <h1 className="brand">Дедлайни</h1>
       <p className="lead">Усі завдання з вашого Moodle на одній сторінці, від найтерміновішого до найдальшого.</p>
-      <form className="panel" method="post" action="#" autoComplete="on" noValidate onSubmit={onSubmit}>
-        <label>
-          Адреса вашого Moodle
-          <input
-            name="site"
-            defaultValue={site}
-            placeholder="moodle.university.edu.ua"
-            inputMode="url"
-            autoComplete="url"
-            autoCapitalize="off"
-            spellCheck={false}
-          />
-        </label>
-        <p className="hint">
-          Скопіюйте з адресного рядка, коли відкриваєте Moodle свого навчального закладу. Можна вставити посилання на
-          будь-яку його сторінку.
-        </p>
+      <form className="panel" method="post" action="#" autoComplete="on" noValidate onSubmit={handleSubmit}>
         <p className="warn-note">
-          Логін і пароль підуть саме на цю адресу, тож вводьте лише Moodle, де справді навчаєтесь.
+          Логін і пароль підуть на {currentSite ? hostOf(currentSite) : 'вказаний нижче Moodle'}. Вводьте лише дані
+          Moodle, де справді навчаєтесь.
         </p>
         <label>
           Логін Moodle
@@ -100,8 +84,25 @@ export function LoginScreen({ site, remember: rememberInitial, message = '', onL
           мобільного застосунку Moodle. На чужому комп’ютері зніміть «Запам’ятати»: тоді токен зникне, щойно ви
           закриєте вкладку.
         </p>
-        <details>
-          <summary>Інші налаштування</summary>
+        <details open={normSite(site) !== DEFAULT_SITE}>
+          <summary>Інший Moodle або вхід через Google</summary>
+          <label>
+            Адреса вашого Moodle
+            <input
+              name="site"
+              value={siteInput}
+              onChange={handleSiteChange}
+              placeholder="moodle.university.edu.ua"
+              inputMode="url"
+              autoComplete="url"
+              autoCapitalize="off"
+              spellCheck={false}
+            />
+          </label>
+          <p className="hint">
+            Скопіюйте з адресного рядка, коли відкриваєте Moodle свого навчального закладу. Можна вставити посилання
+            на будь-яку його сторінку.
+          </p>
           <label>
             Токен (якщо входите через Google чи інший зовнішній сервіс)
             <input name="token" autoComplete="off" spellCheck={false} />
@@ -111,13 +112,13 @@ export function LoginScreen({ site, remember: rememberInitial, message = '', onL
           {error}
         </div>
       </form>
-      {site && (
+      {currentSite && (
         <p className="hint" style={{ marginTop: 16 }}>
-          <a href={`${site}/my/courses.php`} target="_blank" rel="noopener noreferrer">
-            Відкрити {hostOf(site)}
+          <a href={`${currentSite}/my/courses.php`} target="_blank" rel="noopener noreferrer">
+            Відкрити {hostOf(currentSite)}
           </a>
         </p>
       )}
     </main>
   );
-}
+};

@@ -43,6 +43,16 @@ export interface Snapshot {
   items: Task[];
 }
 
+/** Етап завантаження даних з Moodle. 'done' — усе завантажено. */
+export type LoadStage = 'courses' | 'tasks' | 'statuses' | 'done';
+
+/** Прогрес завантаження: поточний етап і, для статусів подань, лічильник. */
+export interface LoadProgress {
+  stage: LoadStage;
+  done?: number;
+  total?: number;
+}
+
 export type BandId = 'overdue' | 'week' | 'month' | 'semester' | 'later' | 'none';
 export type Urgency = 'u-over' | 'u-hot' | 'u-warm' | 'u-mild' | 'u-calm' | 'u-none';
 
@@ -56,3 +66,17 @@ export interface DecoratedTask extends Task {
 }
 
 export type Theme = 'auto' | 'light' | 'dark';
+
+/** Що повертає успішний вхід. */
+export interface LoginSession {
+  site: string;
+  token: string;
+  remember: boolean;
+}
+
+export interface LoginScreenProps {
+  site: string;
+  remember: boolean;
+  message?: string;
+  onLoggedIn: (session: LoginSession) => void;
+}
