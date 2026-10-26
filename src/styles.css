@@ -155,10 +155,9 @@ footer p { margin: 4px 0; }
 @keyframes spin { to { transform: rotate(360deg); } }
 .spinner.small { display: inline-block; width: 16px; height: 16px; border-width: 2px; vertical-align: -3px; }
 dialog.reminders { max-width: min(480px, calc(100vw - 32px)); }
-dialog.reminders .consent-title { font-weight: 600; margin: 14px 0 6px; color: var(--ink); }
-dialog.reminders .consent-list { margin: 0 0 12px; padding-left: 20px; color: var(--muted); font-size: .94rem; display: grid; gap: 4px; }
 dialog.reminders .open-bot { display: inline-block; text-decoration: none; text-align: center; margin: 4px 0 8px; }
 dialog.reminders .more-info { margin: 0 0 12px; }
+dialog.reminders .more-info p { margin: 8px 0 0; font-size: .92rem; }
 dialog.reminders .more-info summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: .92rem; }
 dialog.reminders .waiting { color: var(--muted); font-size: .92rem; }
 dialog.reminders .error { margin: 8px 0 0; }
