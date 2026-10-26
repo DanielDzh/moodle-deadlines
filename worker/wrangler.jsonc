@@ -3,6 +3,11 @@
   "name": "moodle-deadlines-bot",
   "main": "src/index.ts",
   "compatibility_date": "2026-09-01",
+  "vars": {
+    // Origins allowed to call /api/* from a browser (the site). Local development adds localhost via .dev.vars.
+    "ALLOWED_ORIGINS": "https://moodle-dedlainy.tinyapp.workers.dev",
+    "BOT_USERNAME": "moodle_deadlines_bot"
+  },
   "d1_databases": [
     {
       "binding": "DB",
