@@ -17,7 +17,7 @@ const handleTelegram = async (request: Request, env: Env): Promise<Response> => 
   if (!provided || !(await secretsMatch(provided, env.TELEGRAM_WEBHOOK_SECRET))) {
     return new Response('Unauthorized', { status: 401 });
   }
-  const bot = createBot(env.TELEGRAM_BOT_TOKEN, createBotCore(createUsersRepo(env.DB)));
+  const bot = createBot(env.TELEGRAM_BOT_TOKEN, env.BOT_USERNAME, createBotCore(createUsersRepo(env.DB)));
   return webhookCallback(bot, 'cloudflare-mod')(request);
 };
 
@@ -31,6 +31,7 @@ const handleSiteApi = async (request: Request, env: Env): Promise<Response> => {
     tokenKey: env.TOKEN_KEY,
     botUsername: env.BOT_USERNAME,
     blockedSites: parseBlockedSites(env.BLOCKED_SITES),
+    siteCheck: env.DEV_ALLOW_ANY_SITE === '1' ? (input) => ({ ok: true, site: String(input).replace(/\/+$/, '') }) : undefined,
   });
   for (const [name, value] of Object.entries(cors ?? {})) response.headers.set(name, value);
   return response;

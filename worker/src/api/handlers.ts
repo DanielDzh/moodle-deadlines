@@ -3,7 +3,7 @@ import { generateLinkCode, generateUserId } from '../lib/link-code';
 import { parseBearer, parseLinkStart, parseSync } from '../lib/request-parsing';
 import { checkMoodleSite } from '../lib/site-url';
 import { encryptToken, sha256Hex } from '../lib/token-crypto';
-import type { ApiRepo, LinkState } from '../types';
+import type { ApiRepo, LinkState, SiteCheck } from '../types';
 
 export interface ApiDeps {
   repo: ApiRepo;
@@ -11,6 +11,8 @@ export interface ApiDeps {
   tokenKey: string;
   botUsername: string;
   blockedSites: readonly string[];
+  /** Replaces the Moodle address check. For local development only (see DEV_ALLOW_ANY_SITE); never set in production. */
+  siteCheck?: (input: unknown) => SiteCheck;
   now?: () => number;
 }
 
@@ -75,7 +77,7 @@ export const handleApi = async (request: Request, deps: ApiDeps): Promise<Respon
 const linkStart = async (request: Request, deps: ApiDeps, now: number): Promise<Response> => {
   const parsed = parseLinkStart(await readJson(request));
   if (!parsed.ok) return json({ error: parsed.error }, 400);
-  const site = checkMoodleSite(parsed.value.site, deps.blockedSites);
+  const site = (deps.siteCheck ?? ((input) => checkMoodleSite(input, deps.blockedSites)))(parsed.value.site);
   if (!site.ok) return json({ error: site.reason }, 400);
 
   await deps.repo.deleteExpiredPending(now);

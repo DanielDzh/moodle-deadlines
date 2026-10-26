@@ -13,6 +13,8 @@ export interface Env {
   BOT_USERNAME: string;
   /** Optional comma-separated Moodle hosts that are refused. */
   BLOCKED_SITES?: string;
+  /** "1" skips the Moodle address check so a local mock Moodle works. Set only in .dev.vars, never in production. */
+  DEV_ALLOW_ANY_SITE?: string;
 }
 
 export type ReminderKind = '24h' | '3h';
