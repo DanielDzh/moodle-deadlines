@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { local } from '../lib/storage';
 
-/** useState, значення якого переживає перезавантаження сторінки (localStorage). */
+/** useState whose value survives a page reload (localStorage). */
 export function useStoredState<T>(key: string, initial: T | (() => T)) {
   const [value, setValue] = useState<T>(() => {
     const fallback = typeof initial === 'function' ? (initial as () => T)() : initial;

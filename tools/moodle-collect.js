@@ -1,5 +1,5 @@
-// Moodle → JSON. Лише читає дані, нічого в Moodle не змінює і не подає.
-// Вставте в консоль (F12 → Console) на сторінці «Мої курси» (/my/courses.php) свого Moodle після входу.
+// Moodle → JSON. Read-only: changes and submits nothing in Moodle.
+// Paste into the console (F12 → Console) on your Moodle "My courses" page (/my/courses.php) after logging in.
 (async () => {
   const sesskey = M.cfg.sesskey;
   const root = M.cfg.wwwroot;
@@ -13,16 +13,16 @@
       body: JSON.stringify([{ index: 0, methodname, args }]),
     });
     const [res] = await r.json();
-    if (res.error) throw new Error(`${methodname}: ${res.exception?.message || 'помилка'}`);
+    if (res.error) throw new Error(`${methodname}: ${res.exception?.message || 'error'}`);
     return res.data;
   };
 
-  console.log('1/4 Курси…');
+  console.log('1/4 Courses…');
   const { courses } = await call('core_course_get_enrolled_courses_by_timeline_classification',
     { classification: 'all', limit: 0, offset: 0, sort: 'fullname' });
   const courseids = courses.map(c => c.id);
 
-  console.log('2/4 Завдання з термінами…');
+  console.log('2/4 Tasks with deadlines…');
   const ev = await call('core_calendar_get_action_events_by_courses',
     { courseids, timesortfrom: 0, limitnum: 50 });
   const events = (ev.groupedbycourse || []).flatMap(g => g.events.map(e => ({
@@ -36,7 +36,7 @@
     cmid: Number(new URL(e.url, location.href).searchParams.get('id')) || null,
   })));
 
-  console.log('3/4 Активності курсів…');
+  console.log('3/4 Course activities…');
   const activities = [];
   for (const c of courses) {
     try {
@@ -51,10 +51,10 @@
           });
         }
       }
-    } catch (e) { console.warn('Не вдалося отримати курс', c.fullname, e.message); }
+    } catch (e) { console.warn('Could not fetch course', c.fullname, e.message); }
   }
 
-  console.log('4/4 Сторінки завдань…');
+  console.log('4/4 Assignment pages…');
   const parser = new DOMParser();
   const assigns = activities.filter(x => x.module === 'assign');
   for (const [i, act] of assigns.entries()) {
@@ -94,5 +94,5 @@
   link.click();
   try { await navigator.clipboard.writeText(json); } catch {}
 
-  console.log(`Готово: курсів ${courses.length}, подій ${events.length}, активностей ${activities.length}. Файл moodle-data.json завантажено.`);
+  console.log(`Done: ${courses.length} courses, ${events.length} events, ${activities.length} activities. moodle-data.json downloaded.`);
 })();

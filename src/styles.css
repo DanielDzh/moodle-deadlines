@@ -36,7 +36,7 @@ button, input { font: inherit; color: inherit; }
 
 .wrap { max-width: 980px; margin: 0 auto; padding: 20px 18px 40px; }
 
-/* Шапка */
+/* Header */
 .top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 22px; }
 .brand { font-family: var(--display); font-weight: 700; font-size: 1.5rem; letter-spacing: -0.01em; margin: 0; }
 .who { margin: 2px 0 0; color: var(--muted); font-size: .9rem; }
@@ -47,7 +47,7 @@ button, input { font: inherit; color: inherit; }
 .btn.ghost { background: transparent; }
 .btn[disabled] { opacity: .55; cursor: progress; }
 
-/* Зведення */
+/* Summary */
 .hero { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px 24px; margin-bottom: 18px; }
 .hero-label { margin: 0 0 6px; color: var(--muted); font-size: .9rem; }
 .hero-title { font-family: var(--display); font-weight: 500; font-size: clamp(1.25rem, 3.4vw, 1.75rem); line-height: 1.25; margin: 0; max-width: 34ch; }
@@ -61,7 +61,7 @@ button, input { font: inherit; color: inherit; }
 .stats dd { order: 1; margin: 0; font-family: var(--display); font-weight: 700; font-size: 1.4rem; }
 .stats .bad dd { color: var(--over); }
 
-/* Фільтри */
+/* Filters */
 .filters { display: flex; flex-direction: column; gap: 12px; margin-bottom: 26px; }
 .filter-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
 .filter-bar .toggles { margin-left: auto; }
@@ -85,7 +85,7 @@ button, input { font: inherit; color: inherit; }
 .switch input:checked { background: var(--accent); }
 .switch input:checked::after { transform: translateX(18px); }
 
-/* Смуги */
+/* Bands */
 .band { margin-bottom: 34px; }
 .band-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; padding-bottom: 10px; margin-bottom: 14px; border-bottom: 3px solid var(--u); }
 .band-head h2 { font-family: var(--display); font-weight: 700; font-size: 1.2rem; margin: 0; color: var(--u); }
@@ -94,7 +94,7 @@ button, input { font: inherit; color: inherit; }
 .band-overdue { --u: var(--over); } .band-week { --u: var(--hot); } .band-month { --u: var(--warm); }
 .band-semester { --u: var(--mild); } .band-later { --u: var(--calm); } .band-none { --u: var(--done); }
 
-/* Дні */
+/* Days */
 .day { display: grid; grid-template-columns: 148px 1fr; gap: 18px; margin-bottom: 18px; }
 .rail { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 14px); align-self: start; display: flex; flex-direction: column; color: var(--u); }
 .rail .big { font-family: var(--display); font-weight: 700; font-size: 3.4rem; line-height: 1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; }
@@ -104,7 +104,7 @@ button, input { font: inherit; color: inherit; }
 .u-over { --u: var(--over); } .u-hot { --u: var(--hot); } .u-warm { --u: var(--warm); }
 .u-mild { --u: var(--mild); } .u-calm { --u: var(--calm); } .u-done, .u-none { --u: var(--done); }
 
-/* Картки */
+/* Cards */
 .cards { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .card { --c: var(--muted); background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--c); border-radius: 12px; padding: 14px 16px; min-width: 0; }
 .card.is-done { opacity: .58; }
@@ -138,14 +138,14 @@ details.full p { white-space: pre-line; margin: 8px 0 0; max-width: 72ch; overfl
 footer { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: .88rem; }
 footer p { margin: 4px 0; }
 
-/* Вхід */
+/* Login */
 .login { max-width: 460px; margin: 0 auto; padding: 8vh 18px 40px; }
 .login .brand { font-size: 2.2rem; }
 .lead { color: var(--muted); margin: 8px 0 24px; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 22px; display: flex; flex-direction: column; gap: 14px; }
 .panel label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: .92rem; }
 .panel input { border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 10px 12px; font-weight: 500; font-size: max(16px, 1rem); }
-/* iPhone збільшує сторінку, якщо шрифт поля менший за 16px, тому поля вводу завжди мають щонайменше 16px */
+/* iPhone zooms the page if an input font is under 16px, so inputs are always at least 16px */
 .panel details { font-size: .92rem; }
 .panel details summary { cursor: pointer; color: var(--accent); font-weight: 600; margin-bottom: 10px; }
 .panel details label { margin-top: 10px; }
@@ -181,7 +181,7 @@ footer p { margin: 4px 0; }
 .step .count { display: inline-block; width: 0; margin-left: -6px; white-space: nowrap; font-size: .8em; font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
 .loading { overflow-x: clip; }
 .step.done .mark { background: var(--calm); border-color: var(--calm); }
-/* Вертикальне центрування: короткий вміст (вхід, завантаження, кілька завдань) стоїть посередині екрана, довгий гортається як звичайно */
+/* Vertical centring: short content (login, loading, a few tasks) sits in the middle of the screen, long content scrolls as usual */
 body { display: flex; flex-direction: column; }
 #root { flex: 1 0 auto; display: flex; flex-direction: column; }
 #root > .wrap, #root > .login, #root > .loading { margin-top: auto; margin-bottom: auto; width: 100%; }
@@ -189,7 +189,7 @@ body { display: flex; flex-direction: column; }
 #root > .wrap { animation: board-in .25s ease; }
 .login { padding-top: 24px; }
 .loading { min-height: 0; }
-/* Діалог виходу */
+/* Logout dialog */
 dialog.confirm { border: 1px solid var(--line); border-radius: 16px; padding: 22px; max-width: min(420px, calc(100vw - 32px)); background: var(--surface); color: var(--ink); }
 dialog.confirm::backdrop { background: rgba(10, 14, 22, .55); }
 dialog.confirm h2 { font-family: var(--display); font-weight: 500; font-size: 1.15rem; margin: 0 0 8px; }
@@ -199,7 +199,7 @@ dialog.confirm .row { display: flex; flex-wrap: wrap; justify-content: flex-end;
 .remember { flex-direction: row !important; align-items: center; gap: 10px !important; font-weight: 600; }
 .remember input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; padding: 0; }
 .warn-note { color: var(--warn-ink); font-weight: 500; font-size: .84rem; }
-/* Горить: здати сьогодні, завтра або післязавтра */
+/* Burning: due today, tomorrow or the day after */
 @keyframes flicker { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 @keyframes ember {
   0%, 100% { box-shadow: 0 0 0 1px color-mix(in srgb, var(--fire2) 50%, transparent), 0 0 12px -2px color-mix(in srgb, var(--fire2) 55%, transparent); }

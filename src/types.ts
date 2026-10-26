@@ -1,4 +1,4 @@
-/** Курс, у якому навчається користувач. Дати — Unix-час у секундах (як у Moodle). */
+/** A course the user is enrolled in. Dates are Unix time in seconds (as in Moodle). */
 export interface Course {
   id: number;
   name: string;
@@ -8,24 +8,24 @@ export interface Course {
   color: string;
 }
 
-/** Статус подання завдання: значення з Moodle плюс 'unknown', якщо статус не вдалося отримати. */
+/** Submission status of an assignment: Moodle's value plus 'unknown' when the status could not be fetched. */
 export type SubmissionStatus = '' | 'new' | 'draft' | 'submitted' | 'graded' | 'reopened' | 'unknown' | (string & {});
 
-/** Одне завдання, форум, тест чи інша активність із терміном. */
+/** One assignment, forum, quiz or other activity with a deadline. */
 export interface Task {
-  /** Стабільний ключ, за яким зберігається галочка «Виконано». */
+  /** Stable key under which the "Done" tick is stored. */
   key: string;
-  /** Тип модуля Moodle: assign, forum, quiz… */
+  /** Moodle module type: assign, forum, quiz… */
   kind: string;
   courseid: number;
   cmid: number | null;
   assignid?: number;
   name: string;
-  /** Термін здачі; 0 — без терміну. */
+  /** Due date; 0 — no deadline. */
   due: number;
-  /** Коли відкривається приймання робіт; 0 — одразу. */
+  /** When submissions open; 0 — immediately. */
   open: number;
-  /** Остаточний термін, після якого Moodle не приймає роботи; 0 — немає. */
+  /** Final deadline after which Moodle stops accepting work; 0 — none. */
   cutoff: number;
   intro: string;
   url: string;
@@ -33,7 +33,7 @@ export interface Task {
   grade?: string;
 }
 
-/** Зліпок даних, який зберігається в браузері між відкриттями сторінки. */
+/** Data snapshot stored in the browser between page visits. */
 export interface Snapshot {
   v: number;
   collectedAt: number;
@@ -43,10 +43,10 @@ export interface Snapshot {
   items: Task[];
 }
 
-/** Етап завантаження даних з Moodle. 'done' — усе завантажено. */
+/** Stage of loading data from Moodle. 'done' — everything loaded. */
 export type LoadStage = 'courses' | 'tasks' | 'statuses' | 'done';
 
-/** Прогрес завантаження: поточний етап і, для статусів подань, лічильник. */
+/** Loading progress: current stage and, for submission statuses, a counter. */
 export interface LoadProgress {
   stage: LoadStage;
   done?: number;
@@ -56,10 +56,10 @@ export interface LoadProgress {
 export type BandId = 'overdue' | 'week' | 'month' | 'semester' | 'later' | 'none';
 export type Urgency = 'u-over' | 'u-hot' | 'u-warm' | 'u-mild' | 'u-calm' | 'u-none';
 
-/** Завдання з полями, обчисленими відносно сьогоднішньої дати. */
+/** A task with fields computed relative to today's date. */
 export interface DecoratedTask extends Task {
   band: BandId;
-  /** Скільки календарних днів до терміну (від'ємне — минуло); null — без терміну. */
+  /** Calendar days until the deadline (negative — already passed); null — no deadline. */
   days: number | null;
   overdue: boolean;
   urg: Urgency;
@@ -67,7 +67,7 @@ export interface DecoratedTask extends Task {
 
 export type Theme = 'auto' | 'light' | 'dark';
 
-/** Що повертає успішний вхід. */
+/** What a successful login returns. */
 export interface LoginSession {
   site: string;
   token: string;

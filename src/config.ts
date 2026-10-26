@@ -1,25 +1,25 @@
 import type { BandId, LoadStage } from './types';
 
 /**
- * Версія формату збережених даних. Збільште її, якщо змінюєте формат Snapshot,
- * щоб у користувачів старий кеш не використовувався.
- * 2 — лише поточні курси.
+ * Version of the saved data format. Bump it when you change the Snapshot format,
+ * so that users' old cache is not reused.
+ * 2 — current courses only.
  */
 export const DATA_VERSION = 2;
 
-/** Moodle, який підставляється у вхід, поки людина не вказала інший. */
+/** Moodle address pre-filled on the login screen until the user enters another one. */
 export const DEFAULT_SITE = 'https://online.ubts.org.ua';
 
-/** За скільки днів до терміну неподане завдання починає «горіти». Для перевірки: ?burnDays=7 */
+/** How many days before the due date an unsubmitted task starts "burning". To test: ?burnDays=7 */
 export const BURN_DAYS = 2;
 
-/** Палітра курсів. Колір прив'язаний до порядку курсу, а не береться з даних. */
+/** Course colour palette. A colour is tied to the course's position, not taken from the data. */
 export const COURSE_COLORS = [
   '#3B6FD8', '#C2410C', '#0F8A6A', '#9333EA', '#B45309', '#0E7490',
   '#BE185D', '#4D7C0F', '#6D28D9', '#A16207', '#2563EB', '#DC2626',
 ] as const;
 
-/** Підписи для типів активностей, які не є завданнями. */
+/** Labels for activity types that are not assignments (UI text, Ukrainian). */
 export const KIND_LABEL: Record<string, string> = {
   forum: 'Форум',
   quiz: 'Тест',
@@ -42,7 +42,7 @@ export const BAND_TITLE: Record<BandId, string> = {
   none: 'Без терміну',
 };
 
-/** Ключі в localStorage / sessionStorage. Ті самі, що в першій версії, тож дані користувачів зберігаються. */
+/** localStorage / sessionStorage keys. Same as in the first version, so users keep their data. */
 export const KEYS = {
   site: 'md.site',
   token: 'md.token',
@@ -57,29 +57,30 @@ export const KEYS = {
 } as const;
 
 /**
- * Підтримка автора: одна банка Monobank на всі проєкти. Порожня адреса ховає кнопку;
- * під час розробки (npm run dev) без адреси вона показується із заглушкою.
+ * Author support: one Monobank jar for all projects. An empty URL hides the button;
+ * during development (npm run dev) without a URL it is shown with a placeholder.
  */
 export const DONATE_URL = 'https://send.monobank.ua/jar/2hB9555qM4';
 export const DONATE_HREF = DONATE_URL || (import.meta.env.DEV ? '#donate-preview' : '');
 export const DONATE_LABEL = 'Підтримати проєкт';
 
-/** Як часто перевіряти, чи почалася нова хвилина, мс. */
+/** How often to check whether a new minute has started, ms. */
 export const MINUTE_TICK_MS = 15_000;
 
-/** Якщо до терміну менше стільки годин, залишок показується з годинами («1 день 14 год»); далі — лише дні. */
+/** Below this many hours to the deadline the time left is shown with hours ("1 день 14 год"); beyond that, days only. */
 export const PRECISE_LEFT_HOURS = 72;
 
-/** Повноекранний лоадер: показується щоразу, коли дані оновлюються, щоб не світилися застарілі лейбли. */
-export const LOADER = {  /** Мінімальний час показу лоадера, щоб кроки не мигали, мс. */
+/** Full-page loader: shown every time data refreshes, so stale labels never show. */
+export const LOADER = {
+  /** Minimum time the loader stays visible so the steps do not flicker, ms. */
   minShowMs: 400,
-  /** Скільки лоадер лишається з усіма галочками перед тим, як відкрити дошку, мс. */
+  /** How long the loader stays visible with all ticks before the board opens, ms. */
   doneHoldMs: 180,
-  /** Тривалість плавного зникнення лоадера, мс. Має збігатися з transition у .loading (styles.css). */
+  /** Loader fade-out duration, ms. Must match the transition in .loading (styles.css). */
   fadeMs: 220,
 } as const;
 
-/** Кроки лоадера в порядку виконання. */
+/** Loader steps in execution order (labels are UI text, Ukrainian). */
 export const LOAD_STEPS: { id: Exclude<LoadStage, 'done'>; label: string }[] = [
   { id: 'courses', label: 'Курси' },
   { id: 'tasks', label: 'Завдання і терміни' },

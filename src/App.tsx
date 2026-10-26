@@ -10,13 +10,13 @@ import { local, readSecret, saveSecret, wipeSecrets } from './lib/storage';
 import { normSite } from './lib/url';
 import type { LoadProgress, Snapshot, Theme } from './types';
 
-/** Адреса Moodle: з посилання ?site=… (щоб роздати готове посилання) або збережена раніше. */
+/** Moodle address: from the ?site=… link (to hand out a ready link) or saved earlier. */
 function initialSite(): string {
   try {
     const q = new URLSearchParams(window.location.search).get('site');
     if (q) return normSite(q);
   } catch {
-    /* немає доступу до адреси */
+    /* no access to the address */
   }
   return local.get<string>(KEYS.site, '') || DEFAULT_SITE;
 }
@@ -62,7 +62,7 @@ export function App() {
     setConfirmingLogout(false);
   }, []);
 
-  /** Тягне свіжі дані з Moodle. Поки триває, на екрані лишаються збережені з минулого разу. */
+  /** Pulls fresh data from Moodle. While it runs, the data saved last time stays on screen. */
   const refresh = useCallback(async () => {
     if (!token || busy.current) return;
     busy.current = true;
@@ -73,7 +73,7 @@ export function App() {
       setSnapshot(data);
       setError('');
       if (loaderRef.current) {
-        // Усі галочки встигають з'явитися, а лоадер не мигає, якщо Moodle відповів миттєво.
+        // All ticks have time to appear, and the loader does not flicker if Moodle answered instantly.
         setProgress({ stage: 'done' });
         await sleep(Math.max(0, LOADER.minShowMs - (Date.now() - started)) + LOADER.doneHoldMs);
         setLeaving(true);
@@ -96,7 +96,7 @@ export function App() {
     }
   }, [site, token, remember, setLoaderOn]);
 
-  // Дані оновлюються щоразу, коли сторінку відкривають або перезавантажують, і одразу після входу.
+  // Data refreshes every time the page is opened or reloaded, and right after login.
   useEffect(() => {
     void refresh();
   }, [refresh]);

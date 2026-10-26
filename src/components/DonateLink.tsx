@@ -1,8 +1,8 @@
 import { DONATE_HREF, DONATE_LABEL } from '../config';
 
 /**
- * Посилання на підтримку проєкту із серцем, що б'ється. Без адреси в конфігу нічого не показує.
- * icon — лише серце (для шапки), pill — серце з підписом (для екрана завантаження).
+ * Support link with a beating heart. Renders nothing when the config has no URL.
+ * icon — heart only (header), pill — heart with a label (loading screen).
  */
 export const DonateLink = ({ variant }: { variant: 'icon' | 'pill' }) => {
   if (!DONATE_HREF) return null;

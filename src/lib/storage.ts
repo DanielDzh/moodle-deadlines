@@ -1,8 +1,8 @@
 import { KEYS } from '../config';
 
 /**
- * Обгортка над Web Storage. Сховище може бути недоступне (приватний режим, заборонені cookies),
- * тож кожне звернення в try/catch, а сайт працює й без нього.
+ * Web Storage wrapper. Storage may be unavailable (private mode, blocked cookies),
+ * so every access is in try/catch and the site works without it too.
  */
 function makeStore(get: () => Storage) {
   return {
@@ -18,14 +18,14 @@ function makeStore(get: () => Storage) {
       try {
         get().setItem(key, JSON.stringify(value));
       } catch {
-        /* сховище недоступне */
+        /* storage unavailable */
       }
     },
     del(key: string) {
       try {
         get().removeItem(key);
       } catch {
-        /* сховище недоступне */
+        /* storage unavailable */
       }
     },
   };
@@ -35,7 +35,7 @@ export const local = makeStore(() => window.localStorage);
 export const session = makeStore(() => window.sessionStorage);
 
 /**
- * Токен і кеш завдань: з «Запам'ятати» — у localStorage, без нього — лише до закриття вкладки.
+ * Token and task cache: with "Remember" — in localStorage, without it — only until the tab is closed.
  */
 export function saveSecret(key: string, value: unknown, remember: boolean) {
   if (remember) {

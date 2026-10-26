@@ -1,6 +1,6 @@
 import { PRECISE_LEFT_HOURS } from '../config';
 
-/** Українські відмінки після числа: 1 день, 2 дні, 5 днів, 11 днів, 21 день… */
+/** Ukrainian noun forms after a number: 1 день, 2 дні, 5 днів, 11 днів, 21 день… */
 export function plural(n: number, one: string, few: string, many: string): string {
   const a = Math.abs(n);
   const m10 = a % 10;
@@ -15,7 +15,7 @@ export const taskWord = (n: number) => plural(n, 'завдання', 'завда
 
 const toDate = (ts: number) => new Date(ts * 1000);
 
-/** «пт, 31 жовтня» (рік — лише якщо не поточний). */
+/** "пт, 31 жовтня" (the year only if it is not the current one). */
 export function fmtDay(ts: number, now = new Date()): string {
   const d = toDate(ts);
   const o: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'long' };
@@ -23,7 +23,7 @@ export function fmtDay(ts: number, now = new Date()): string {
   return d.toLocaleDateString('uk-UA', o);
 }
 
-/** «31 жовтня» (рік — лише якщо не поточний). */
+/** "31 жовтня" (the year only if it is not the current one). */
 export function fmtDayLong(ts: number, now = new Date()): string {
   const d = toDate(ts);
   const o: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long' };
@@ -34,7 +34,7 @@ export function fmtDayLong(ts: number, now = new Date()): string {
 export const fmtTime = (ts: number) => toDate(ts).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' });
 export const fmtDateTime = (ts: number, now = new Date()) => `${fmtDayLong(ts, now)} о ${fmtTime(ts)}`;
 
-/** Різниця в календарних днях між датою терміну і сьогодні (за місцевим часом). */
+/** Difference in calendar days between the deadline date and today (local time). */
 export function daysUntil(ts: number, now = new Date()): number {
   const d = toDate(ts);
   const a = Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
@@ -42,7 +42,7 @@ export function daysUntil(ts: number, now = new Date()): number {
   return Math.round((a - b) / 864e5);
 }
 
-/** Ключ календарного дня для групування завдань з однією датою. */
+/** Calendar-day key for grouping tasks that share a date. */
 export function dayKey(ts: number): string {
   const d = toDate(ts);
   return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
@@ -54,7 +54,7 @@ export function whenPhrase(days: number): string {
   return `через ${days} ${dayWord(days)}`;
 }
 
-/** Залишок до терміну в годинах і хвилинах, якщо до нього менше PRECISE_LEFT_HOURS; інакше null. */
+/** Time left to the deadline in hours and minutes when it is under PRECISE_LEFT_HOURS; otherwise null. */
 export interface PreciseLeft {
   days: number;
   hours: number;
@@ -67,21 +67,21 @@ export function preciseLeft(due: number, now = new Date()): PreciseLeft | null {
   return { days: Math.floor(sec / 86400), hours: Math.floor((sec % 86400) / 3600), minutes: Math.floor((sec % 3600) / 60) };
 }
 
-/** Підпис біля великого числа: що саме показати, коли термін уже близько. */
+/** Caption next to the big number: what to show when the deadline is close. */
 export interface RailTime {
   big: string | number;
   cap: string;
   word: boolean;
 }
 
-/** «1 день 14 год», «5 год», «40 хв» — залишок словами, без «через». */
+/** "1 день 14 год", "5 год", "40 хв" — time left in words, without "через". */
 function leftText({ days, hours, minutes }: PreciseLeft): string {
   if (days > 0) return `${days} ${dayWord(days)}${hours ? ` ${hours} год` : ''}`;
   if (hours > 0) return `${hours} год`;
   return `${Math.max(1, minutes)} хв`;
 }
 
-/** Велике число й підпис у рейці дня; null — лишити звичайний підрахунок днів. */
+/** Big number and caption in the day rail; null — keep the plain day count. */
 export function railTime(due: number, calendarDays: number, now = new Date()): RailTime | null {
   const left = preciseLeft(due, now);
   if (!left) return null;
@@ -94,7 +94,7 @@ export function railTime(due: number, calendarDays: number, now = new Date()): R
   return { big: left.days, cap: left.hours ? `${dayWord(left.days)} ${left.hours} год` : `${dayWord(left.days)} до здачі`, word: false };
 }
 
-/** Фраза для зведення: «сьогодні, ще 5 год», «через 1 день 14 год», «через 3 дні». */
+/** Phrase for the summary: "сьогодні, ще 5 год", "через 1 день 14 год", "через 3 дні". */
 export function whenText(due: number, calendarDays: number, now = new Date()): string {
   const left = preciseLeft(due, now);
   if (!left) return whenPhrase(calendarDays);

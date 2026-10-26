@@ -2,7 +2,7 @@
   "name": "moodle-deadlines",
   "private": true,
   "version": "2.0.0",
-  "description": "Усі завдання з вашого Moodle на одній сторінці, від найтерміновішого до найдальшого.",
+  "description": "All your Moodle deadlines on one page, from the most urgent to the furthest away.",
   "type": "module",
   "scripts": {
     "dev": "vite",

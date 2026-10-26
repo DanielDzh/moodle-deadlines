@@ -3,8 +3,8 @@ import type { BandId, Course, DecoratedTask, Snapshot, Task } from '../types';
 import { dayKey, daysUntil } from './dates';
 
 /**
- * Кінець семестру: найчастіша дата завершення серед поточних курсів.
- * Якщо в курсах її немає — 31 січня або 30 червня, залежно від пори року.
+ * End of the semester: the most common end date among the current courses.
+ * If courses have none: 31 January or 30 June, depending on the time of year.
  */
 export function semesterEnd(courses: Course[], now = new Date()): number {
   const t = now.getTime() / 1000;
@@ -27,7 +27,7 @@ export function semesterEnd(courses: Course[], now = new Date()): number {
   return Math.floor(end.getTime() / 1000);
 }
 
-/** Смуга й терміновість завдання відносно сьогодні. */
+/** Band and urgency of a task relative to today. */
 export function decorate(task: Task, semEnd: number, now = new Date()): DecoratedTask {
   if (!task.due) return { ...task, band: 'none', days: null, overdue: false, urg: 'u-none' };
   const days = daysUntil(task.due, now);
@@ -45,7 +45,7 @@ export function decorate(task: Task, semEnd: number, now = new Date()): Decorate
   return { ...task, band, days, overdue, urg };
 }
 
-/** Найтерміновіше зверху; серед прострочених — нещодавно прострочені першими; без терміну — у кінці. */
+/** Most urgent first; among overdue — recently overdue first; no deadline — at the end. */
 export function compareTasks(a: DecoratedTask, b: DecoratedTask): number {
   if (!a.due && !b.due) return a.name.localeCompare(b.name, 'uk');
   if (!a.due) return 1;
@@ -76,7 +76,7 @@ export interface BandView {
   groups: DayGroup[];
 }
 
-/** Усе, що потрібно для відмальовування дошки, обчислене з одного зліпка даних. */
+/** Everything needed to render the board, computed from one data snapshot. */
 export function buildBoard(snapshot: Snapshot, opts: BoardOptions) {
   const now = opts.now ?? new Date();
   const courseIds = new Set(snapshot.courses.map((c) => c.id));
@@ -92,7 +92,7 @@ export function buildBoard(snapshot: Snapshot, opts: BoardOptions) {
   const scoped = all.filter((t) => filter.size === 0 || filter.has(t.courseid));
   const visible = scoped.filter(isShown);
 
-  // Зведення не залежить від перемикачів: рахує лише те, що ще треба зробити.
+  // The summary does not depend on the toggles: it counts only what is still to be done.
   const pending = scoped.filter((t) => !isFinished(t));
   const upcoming = pending.filter((t) => t.due && !t.overdue);
   const summary = {
@@ -103,7 +103,7 @@ export function buildBoard(snapshot: Snapshot, opts: BoardOptions) {
     total: scoped.length,
   };
 
-  // Лічильники на чипах — скільки завдань курсу зараз видно.
+  // Counters on the chips: how many tasks of a course are visible right now.
   const counts = new Map<number, number>();
   const shownAll = all.filter(isShown);
   for (const t of shownAll) counts.set(t.courseid, (counts.get(t.courseid) ?? 0) + 1);

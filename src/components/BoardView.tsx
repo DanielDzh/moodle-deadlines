@@ -24,14 +24,14 @@ interface Props {
   onLogout: () => void;
 }
 
-/** Поріг «горить» можна тимчасово змінити в адресі: ?burnDays=7 — зручно, щоб подивитися ефект. */
+/** The "burning" threshold can be changed temporarily in the URL: ?burnDays=7 — handy to preview the effect. */
 function burnDaysFromUrl(): number {
   try {
     const raw = new URLSearchParams(window.location.search).get('burnDays');
     const n = raw === null || raw.trim() === '' ? NaN : Number(raw);
     if (Number.isInteger(n) && n >= 0 && n <= 31) return n;
   } catch {
-    /* немає доступу до адреси */
+    /* no access to the address */
   }
   return BURN_DAYS;
 }
@@ -47,7 +47,7 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout }: Pro
 
   const board = useMemo(
     () => buildBoard(snapshot, { done, filter, hideDone, hideSubmitted, burnDays }),
-    // minute у залежностях — щоб залишок годин і дні перераховувалися самі
+    // minute is a dependency so that time left and days recompute on their own
     [snapshot, done, filter, hideDone, hideSubmitted, burnDays, minute],
   );
   const courses = useMemo(() => new Map<number, Course>(snapshot.courses.map((c) => [c.id, c])), [snapshot]);

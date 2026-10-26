@@ -5,10 +5,10 @@ interface Props {
   onClose: () => void;
 }
 
-/** Підтвердження виходу. Esc і клік поза вікном лише закривають його. */
+/** Logout confirmation. Esc and a click outside the dialog only close it. */
 export function LogoutDialog({ onConfirm, onClose }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
-  // Колбеки через ref: вікно відкривається один раз, навіть якщо сторінка перемальовується під час оновлення даних.
+  // Callbacks via ref: the dialog opens once even if the page re-renders during a data refresh.
   const actions = useRef({ onConfirm, onClose });
   actions.current = { onConfirm, onClose };
 
