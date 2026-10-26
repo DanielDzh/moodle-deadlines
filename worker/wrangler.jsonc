@@ -7,8 +7,7 @@
     {
       "binding": "DB",
       "database_name": "moodle-deadlines-bot",
-      // Filled in after `npx wrangler d1 create moodle-deadlines-bot`.
-      "database_id": "REPLACE_AFTER_D1_CREATE",
+      "database_id": "4ef67dd9-4a57-4091-a451-5b6bbf6df77d",
       "migrations_dir": "migrations"
     }
   ],

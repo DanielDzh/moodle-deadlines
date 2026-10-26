@@ -1,6 +1,6 @@
 # Plan: deadline reminders via a Telegram bot (option A: Moodle token on the server)
 
-Status: stage 1 done (skeleton, schema, token encryption, reminder planner). Next: stage 2 (bot).
+Status: stage 1 done (skeleton, schema, token encryption, reminder planner). Stage 2 code done (bot commands, webhook, D1 repository, secrets script); waiting for the first deploy and webhook setup.
 
 ## Decisions
 - Channel: Telegram bot `@moodle_deadlines_bot`. Backend: Cloudflare Worker + D1 + cron, in `worker/` of this repository.
@@ -43,7 +43,7 @@ Status: stage 1 done (skeleton, schema, token encryption, reminder planner). Nex
 
 ## Stages with verification
 1. Skeleton, D1 schema, token encryption, a pure "what to send now" function + tests. **Done.**
-2. Bot: webhook, `/start`, `/stop`, `/help`. Verify on the real bot.
+2. Bot: webhook, `/start`, `/stop`, `/status`, `/help`. Code and unit tests done; verify on the real bot after deploy (`worker/scripts/setup-secrets.sh`).
 3. Linking and sync: endpoints, validation, limits.
 4. Server-side refresh from Moodle + cron delivery + buttons.
 5. Site UI: states, consent, deletion. Privacy text.
