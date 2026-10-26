@@ -1,0 +1,19 @@
+{
+  // Telegram reminders Worker. Separate from the site Worker (../wrangler.jsonc).
+  "name": "moodle-deadlines-bot",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-01",
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "moodle-deadlines-bot",
+      // Filled in after `npx wrangler d1 create moodle-deadlines-bot`.
+      "database_id": "REPLACE_AFTER_D1_CREATE",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "triggers": {
+    // Every minute: send reminders and refresh data from Moodle.
+    "crons": ["* * * * *"]
+  }
+}
