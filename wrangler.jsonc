@@ -1,0 +1,9 @@
+{
+  // Назва Worker'а в Cloudflare. Від неї залежить адреса: <name>.<піддомен>.workers.dev
+  "name": "moodle-dedlainy",
+  "compatibility_date": "2026-09-01",
+  "assets": {
+    // Сайт статичний: Cloudflare роздає зібрану папку dist.
+    "directory": "./dist"
+  }
+}
