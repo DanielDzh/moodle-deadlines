@@ -1,4 +1,4 @@
-import { fmtDayLong, fmtTime, taskWord, whenPhrase } from '../lib/dates';
+import { fmtDayLong, fmtTime, taskWord, whenText } from '../lib/dates';
 import type { Board } from '../lib/board';
 import type { Course } from '../types';
 
@@ -17,7 +17,7 @@ export function Summary({ board, courses }: { board: Board; courses: Map<number,
             </a>
           </h2>
           <p className={`hero-when ${next.urg}`}>
-            {courses.get(next.courseid)?.name}: <strong style={{ color: 'var(--u)' }}>{whenPhrase(next.days)}</strong>,{' '}
+            {courses.get(next.courseid)?.name}: <strong style={{ color: 'var(--u)' }}>{whenText(next.due, next.days, board.now)}</strong>,{' '}
             {fmtDayLong(next.due)} о {fmtTime(next.due)}
           </p>
         </>

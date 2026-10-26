@@ -118,7 +118,7 @@ with sync_playwright() as pw:
     check('поле пароля очищене після спроби', page.input_value('#password') == '')
     page.fill('#password', 'secret'); page.click('button[type=submit]')
     page.wait_for_selector('.hero', timeout=15000)
-    page.wait_for_function("!document.querySelector('.progress')?.textContent")
+    page.wait_for_function("!document.querySelector('.loading')")
     check('дошка завантажилася з іменем користувача', page.inner_text('.who') == 'Марія Шевченко')
 
     # 2. Зміст
@@ -188,7 +188,7 @@ with sync_playwright() as pw:
     mp.goto(APP + '?site=moodle.example.edu')
     mp.screenshot(path=f'{SHOTS}/phone-login.png')
     mp.fill('#username', 'maria'); mp.fill('#password', 'secret'); mp.click('button[type=submit]')
-    mp.wait_for_selector('.hero'); mp.wait_for_function("!document.querySelector('.progress')?.textContent")
+    mp.wait_for_selector('.hero'); mp.wait_for_function("!document.querySelector('.loading')")
     mp.screenshot(path=f'{SHOTS}/phone-board.png')
     no_hscroll = mp.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     check('на телефоні немає горизонтальної прокрутки', no_hscroll)
@@ -196,7 +196,7 @@ with sync_playwright() as pw:
     mp.screenshot(path=f'{SHOTS}/phone-month.png')
 
     # 7б. Поріг «горить» з адреси
-    mp.goto(APP + '?burnDays=7'); mp.wait_for_selector('.hero'); mp.wait_for_function("!document.querySelector('.progress')?.textContent")
+    mp.goto(APP + '?burnDays=7'); mp.wait_for_selector('.hero'); mp.wait_for_function("!document.querySelector('.loading')")
     n7 = mp.locator('.card.is-burning').count()
     check(f'?burnDays=7 підпалює весь тиждень ({n7})', n7 >= 4)
 

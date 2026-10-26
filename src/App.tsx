@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { DATA_VERSION, KEYS } from './config';
+import { DATA_VERSION, DEFAULT_SITE, KEYS, LOADER } from './config';
 import { BoardView } from './components/BoardView';
 import { LoginScreen } from './components/LoginScreen';
 import { LogoutDialog } from './components/LogoutDialog';
@@ -8,7 +8,7 @@ import { useStoredState } from './hooks/useStoredState';
 import { collectSnapshot, isAuthError, sanitizeSnapshot } from './lib/moodle';
 import { local, readSecret, saveSecret, wipeSecrets } from './lib/storage';
 import { normSite } from './lib/url';
-import type { Snapshot, Theme } from './types';
+import type { LoadProgress, Snapshot, Theme } from './types';
 
 /** Адреса Moodle: з посилання ?site=… (щоб роздати готове посилання) або збережена раніше. */
 function initialSite(): string {
@@ -18,7 +18,7 @@ function initialSite(): string {
   } catch {
     /* немає доступу до адреси */
   }
-  return local.get<string>(KEYS.site, '') || '';
+  return local.get<string>(KEYS.site, '') || DEFAULT_SITE;
 }
 
 function initialSnapshot(): Snapshot | null {
@@ -26,17 +26,27 @@ function initialSnapshot(): Snapshot | null {
   return d && d.v === DATA_VERSION ? sanitizeSnapshot(d) : null;
 }
 
+const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+
 export function App() {
   const [site, setSite] = useState(initialSite);
   const [token, setToken] = useState(() => readSecret<string>(KEYS.token, ''));
   const [remember, setRemember] = useState(() => local.get<boolean>(KEYS.remember, true) !== false);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(initialSnapshot);
-  const [progress, setProgress] = useState('');
+  const [progress, setProgress] = useState<LoadProgress | null>(null);
+  const [loader, setLoader] = useState(true);
   const [error, setError] = useState('');
   const [loginMessage, setLoginMessage] = useState('');
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [theme, setTheme] = useStoredState<Theme>(KEYS.theme, 'auto');
   const busy = useRef(false);
+  const [leaving, setLeaving] = useState(false);
+  const loaderRef = useRef(true);
+
+  const setLoaderOn = useCallback((on: boolean) => {
+    loaderRef.current = on;
+    setLoader(on);
+  }, []);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -56,11 +66,19 @@ export function App() {
   const refresh = useCallback(async () => {
     if (!token || busy.current) return;
     busy.current = true;
+    const started = Date.now();
     try {
       const data = await collectSnapshot(site, token, setProgress);
       saveSecret(KEYS.data, data, remember);
       setSnapshot(data);
       setError('');
+      if (loaderRef.current) {
+        // Усі галочки встигають з'явитися, а лоадер не мигає, якщо Moodle відповів миттєво.
+        setProgress({ stage: 'done' });
+        await sleep(Math.max(0, LOADER.minShowMs - (Date.now() - started)) + LOADER.doneHoldMs);
+        setLeaving(true);
+        await sleep(LOADER.fadeMs);
+      }
     } catch (e) {
       if (isAuthError(e)) {
         wipeSecrets();
@@ -72,9 +90,11 @@ export function App() {
       }
     } finally {
       busy.current = false;
-      setProgress('');
+      setProgress(null);
+      setLeaving(false);
+      setLoaderOn(false);
     }
-  }, [site, token, remember]);
+  }, [site, token, remember, setLoaderOn]);
 
   // Дані оновлюються щоразу, коли сторінку відкривають або перезавантажують, і одразу після входу.
   useEffect(() => {
@@ -90,8 +110,9 @@ export function App() {
     setSnapshot(null);
     setError('');
     setLoginMessage('');
+    setLoaderOn(true);
     setToken(s.token);
-  }, []);
+  }, [setLoaderOn]);
 
   const nextTheme = useCallback(
     () => setTheme((t) => (t === 'auto' ? 'light' : t === 'light' ? 'dark' : 'auto')),
@@ -103,12 +124,19 @@ export function App() {
   }
 
   const openLogout = () => setConfirmingLogout(true);
+  const closeLogout = () => setConfirmingLogout(false);
+  const handleRetry = () => {
+    setError('');
+    setLoaderOn(true);
+    void refresh();
+  };
   let screen: ReactNode;
-  if (snapshot) {
+  if (loader) {
+    screen = <LoadingScreen progress={progress} leaving={leaving} />;
+  } else if (snapshot) {
     screen = (
       <BoardView
         snapshot={snapshot}
-        progress={progress ? 'Оновлюю дані…' : ''}
         error={error}
         theme={theme}
         onNextTheme={nextTheme}
@@ -119,21 +147,18 @@ export function App() {
     screen = (
       <ErrorScreen
         error={error}
-        onRetry={() => {
-          setError('');
-          void refresh();
-        }}
+        onRetry={handleRetry}
         onLogout={openLogout}
       />
     );
   } else {
-    screen = <LoadingScreen progress={progress} />;
+    screen = <LoadingScreen progress={progress} leaving={leaving} />;
   }
 
   return (
     <>
       {screen}
-      {confirmingLogout && <LogoutDialog onConfirm={logout} onClose={() => setConfirmingLogout(false)} />}
+      {confirmingLogout && <LogoutDialog onConfirm={logout} onClose={closeLogout} />}
     </>
   );
 }

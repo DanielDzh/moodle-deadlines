@@ -1,5 +1,5 @@
 import { BAND_TITLE } from '../config';
-import { dayWord, fmtDay, taskWord } from '../lib/dates';
+import { dayWord, fmtDay, railTime, taskWord } from '../lib/dates';
 import type { BandView, Board, DayGroup } from '../lib/board';
 import type { Course } from '../types';
 import { TaskCard } from './TaskCard';
@@ -45,7 +45,10 @@ function DayRail({ group, board }: { group: DayGroup; board: Board }) {
   let big: string | number;
   let cap: string;
   let word = false;
-  if (first.days === 0) {
+  const precise = first.overdue || first.days < 0 ? null : railTime(first.due, first.days, board.now);
+  if (precise) {
+    ({ big, cap, word } = precise);
+  } else if (first.days === 0) {
     big = 'Сьогодні';
     word = true;
     cap = first.overdue ? 'термін уже минув' : 'останній день';

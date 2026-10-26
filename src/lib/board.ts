@@ -121,6 +121,7 @@ export function buildBoard(snapshot: Snapshot, opts: BoardOptions) {
   }).filter((b) => b.items.length > 0);
 
   return {
+    now,
     all,
     semEnd,
     filter,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dayWord, daysUntil, plural, whenPhrase } from './dates';
+import { dayWord, daysUntil, plural, railTime, whenPhrase, whenText } from './dates';
 
 const ts = (d: Date) => Math.floor(d.getTime() / 1000);
 
@@ -38,5 +38,37 @@ describe('whenPhrase', () => {
     expect(whenPhrase(1)).toBe('завтра');
     expect(whenPhrase(3)).toBe('через 3 дні');
     expect(whenPhrase(5)).toBe('через 5 днів');
+  });
+});
+
+describe('залишок до годин', () => {
+  const now = new Date(2026, 9, 26, 10, 0);
+  const at = (d: number, h: number, m = 0) => ts(new Date(2026, 9, d, h, m));
+  const cal = (due: number) => daysUntil(due, now);
+
+  it('завтра 23:59 о 10:00 — це 1 день 13 год, а не просто «1 день»', () => {
+    const due = at(27, 23, 59);
+    expect(railTime(due, cal(due), now)).toEqual({ big: 1, cap: 'день 13 год', word: false });
+    expect(whenText(due, cal(due), now)).toBe('через 1 день 13 год');
+  });
+  it('сьогодні — «Сьогодні» і скільки лишилось', () => {
+    expect(railTime(at(26, 23, 59), 0, now)).toEqual({ big: 'Сьогодні', cap: 'ще 13 год', word: true });
+    expect(railTime(at(26, 10, 40), 0, now)).toEqual({ big: 'Сьогодні', cap: 'ще 40 хв', word: true });
+    expect(whenText(at(26, 18), 0, now)).toBe('сьогодні, ще 8 год');
+  });
+  it('завтра зранку, менше доби — лише години', () => {
+    const due = at(27, 6);
+    expect(railTime(due, cal(due), now)).toEqual({ big: 20, cap: 'год до здачі', word: false });
+    expect(whenText(due, cal(due), now)).toBe('через 20 год');
+  });
+  it('рівно на добу без годин', () => {
+    const due = at(27, 10);
+    expect(railTime(due, cal(due), now)).toEqual({ big: 1, cap: 'день до здачі', word: false });
+  });
+  it('далі за 72 години — звичайні дні, прострочене не чіпаємо', () => {
+    const due = at(30, 12);
+    expect(railTime(due, cal(due), now)).toBeNull();
+    expect(whenText(due, cal(due), now)).toBe('через 4 дні');
+    expect(railTime(at(26, 9), 0, now)).toBeNull();
   });
 });

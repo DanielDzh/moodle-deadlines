@@ -1,3 +1,5 @@
+import { PRECISE_LEFT_HOURS } from '../config';
+
 /** Українські відмінки після числа: 1 день, 2 дні, 5 днів, 11 днів, 21 день… */
 export function plural(n: number, one: string, few: string, many: string): string {
   const a = Math.abs(n);
@@ -50,4 +52,51 @@ export function whenPhrase(days: number): string {
   if (days === 0) return 'сьогодні';
   if (days === 1) return 'завтра';
   return `через ${days} ${dayWord(days)}`;
+}
+
+/** Залишок до терміну в годинах і хвилинах, якщо до нього менше PRECISE_LEFT_HOURS; інакше null. */
+export interface PreciseLeft {
+  days: number;
+  hours: number;
+  minutes: number;
+}
+
+export function preciseLeft(due: number, now = new Date()): PreciseLeft | null {
+  const sec = due - Math.floor(now.getTime() / 1000);
+  if (sec <= 0 || sec >= PRECISE_LEFT_HOURS * 3600) return null;
+  return { days: Math.floor(sec / 86400), hours: Math.floor((sec % 86400) / 3600), minutes: Math.floor((sec % 3600) / 60) };
+}
+
+/** Підпис біля великого числа: що саме показати, коли термін уже близько. */
+export interface RailTime {
+  big: string | number;
+  cap: string;
+  word: boolean;
+}
+
+/** «1 день 14 год», «5 год», «40 хв» — залишок словами, без «через». */
+function leftText({ days, hours, minutes }: PreciseLeft): string {
+  if (days > 0) return `${days} ${dayWord(days)}${hours ? ` ${hours} год` : ''}`;
+  if (hours > 0) return `${hours} год`;
+  return `${Math.max(1, minutes)} хв`;
+}
+
+/** Велике число й підпис у рейці дня; null — лишити звичайний підрахунок днів. */
+export function railTime(due: number, calendarDays: number, now = new Date()): RailTime | null {
+  const left = preciseLeft(due, now);
+  if (!left) return null;
+  if (calendarDays === 0) return { big: 'Сьогодні', cap: `ще ${leftText(left)}`, word: true };
+  if (left.days === 0) {
+    return left.hours > 0
+      ? { big: left.hours, cap: 'год до здачі', word: false }
+      : { big: Math.max(1, left.minutes), cap: 'хв до здачі', word: false };
+  }
+  return { big: left.days, cap: left.hours ? `${dayWord(left.days)} ${left.hours} год` : `${dayWord(left.days)} до здачі`, word: false };
+}
+
+/** Фраза для зведення: «сьогодні, ще 5 год», «через 1 день 14 год», «через 3 дні». */
+export function whenText(due: number, calendarDays: number, now = new Date()): string {
+  const left = preciseLeft(due, now);
+  if (!left) return whenPhrase(calendarDays);
+  return calendarDays === 0 ? `сьогодні, ще ${leftText(left)}` : `через ${leftText(left)}`;
 }
