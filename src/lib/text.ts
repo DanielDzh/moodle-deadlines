@@ -1,6 +1,6 @@
 /**
- * HTML з Moodle → звичайний текст із переносами рядків.
- * Розбір іде в окремому документі DOMParser, де скрипти не виконуються.
+ * HTML from Moodle → plain text with line breaks.
+ * Parsing happens in a separate DOMParser document where scripts do not run.
  */
 export function toText(html: unknown): string {
   if (!html) return '';
@@ -16,7 +16,7 @@ export function toText(html: unknown): string {
     .trim();
 }
 
-/** Короткий опис для картки: обрізаємо по слову й додаємо «…». */
+/** Short description for a card: cut at a word boundary and add "…". */
 export function shortText(text: string, max = 220): string {
   const flat = text.replace(/\s+/g, ' ').trim();
   if (flat.length <= max) return flat;

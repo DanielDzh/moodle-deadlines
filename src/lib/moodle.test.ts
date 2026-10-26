@@ -8,7 +8,7 @@ const json = (body: unknown) => new Response(JSON.stringify(body), { headers: { 
 afterEach(() => vi.unstubAllGlobals());
 
 describe('flatten', () => {
-  it('розгортає масиви так, як чекає Moodle', () => {
+  it('expands arrays the way Moodle expects', () => {
     expect(flatten({ courseids: [3, 7], flag: true, skip: undefined }).toString()).toBe(
       'courseids%5B0%5D=3&courseids%5B1%5D=7&flag=1',
     );
@@ -16,14 +16,14 @@ describe('flatten', () => {
 });
 
 describe('toText / shortText', () => {
-  it('прибирає теги й не виконує скрипти', () => {
+  it('strips tags and does not run scripts', () => {
     expect(toText('<p>Есе <b>на 2 сторінки</b></p><p>Здати у PDF</p><script>window.x=1</script>')).toBe(
       'Есе на 2 сторінки\nЗдати у PDF',
     );
     expect((window as unknown as { x?: number }).x).toBeUndefined();
   });
 
-  it('обрізає по слову', () => {
+  it('cuts at a word boundary', () => {
     const s = shortText('слово '.repeat(60), 30);
     expect(s.endsWith('…')).toBe(true);
     expect(s.length).toBeLessThanOrEqual(31);
@@ -31,12 +31,12 @@ describe('toText / shortText', () => {
 });
 
 describe('getToken', () => {
-  it('повертає токен', async () => {
+  it('returns a token', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => json({ token: 'abc' })));
     await expect(getToken('https://m.edu', 'u', 'p')).resolves.toBe('abc');
   });
 
-  it('пояснює неправильний пароль і вимкнений мобільний сервіс', async () => {
+  it('explains a wrong password and a disabled mobile service', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => json({ errorcode: 'invalidlogin' })));
     await expect(getToken('https://m.edu', 'u', 'p')).rejects.toThrow('Неправильний логін або пароль.');
     vi.stubGlobal('fetch', vi.fn(async () => json({ errorcode: 'enablewsdescription' })));
@@ -73,7 +73,7 @@ describe('collectSnapshot', () => {
     mod_assign_get_submission_status: { lastattempt: { submission: { status: 'submitted' }, gradingstatus: 'notgraded' } },
   };
 
-  it('збирає курси, завдання, форуми й тести без дублікатів і без «Новин»', async () => {
+  it('collects courses, assignments, forums and quizzes without duplicates and without "News"', async () => {
     const calls: string[] = [];
     vi.stubGlobal(
       'fetch',
@@ -88,11 +88,11 @@ describe('collectSnapshot', () => {
     expect(snap.courses).toMatchObject([{ id: 10, name: 'Історія Церкви' }]);
     expect(snap.items.map((i) => i.key).sort()).toEqual(['assign-1000', 'forum-2001', 'quiz-3000']);
     expect(snap.items.find((i) => i.key === 'assign-1000')).toMatchObject({ status: 'submitted', intro: 'Текст' });
-    // Лише функції читання.
+    // Read functions only.
     expect(calls.every((fn) => /_get_/.test(fn))).toBe(true);
   });
 
-  it('повідомляє про етапи завантаження по порядку, без повторів', async () => {
+  it('reports loading stages in order, without repeats', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async (_url: string, init: RequestInit) => json(responses[new URLSearchParams(String(init.body)).get('wsfunction')!])),
@@ -104,7 +104,7 @@ describe('collectSnapshot', () => {
     expect(stages).toEqual(['courses', 'tasks', 'statuses']);
   });
 
-  it('розпізнає застарілий токен', async () => {
+  it('recognises a stale token', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => json({ exception: 'x', errorcode: 'invalidtoken', message: 'Invalid token' })));
     const err = await collectSnapshot('https://m.edu', 'old').catch((e) => e);
     expect(isAuthError(err)).toBe(true);

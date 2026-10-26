@@ -29,7 +29,7 @@ function bandRange(band: BandView, semEnd: number): string {
   }
 }
 
-/** Велике число днів до здачі зліва від карток одного дня. */
+/** Big number of days to the deadline, left of the cards for one day. */
 function DayRail({ group, board }: { group: DayGroup; board: Board }) {
   const first = group.items[0];
   if (!first.due || first.days === null) {

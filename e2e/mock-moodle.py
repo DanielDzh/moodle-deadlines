@@ -1,29 +1,29 @@
 """
-E2E-перевірка зібраного сайту проти замоканого Moodle (справжній Moodle не потрібен).
+E2E check of the built site against a mocked Moodle (no real Moodle needed).
 
     npm run build
     pip install playwright && playwright install chromium
     TZ=Europe/Kyiv python e2e/mock-moodle.py dist docs/screenshots
 
-Перевіряє вхід, смуги, «горить», фільтри, галочки, тему, вихід, телефонну верстку
-і заодно оновлює скриншоти для README.
+Checks login, bands, "burning", filters, ticks, theme, logout, the phone layout
+and refreshes the README screenshots along the way.
 """
 import json, sys, time, threading, functools, http.server, datetime as dt
 from urllib.parse import parse_qs
 from playwright.sync_api import sync_playwright
 
-OUT = sys.argv[1]           # папка з бандлом
-SHOTS = sys.argv[2]         # куди класти скриншоти
+OUT = sys.argv[1]           # folder with the bundle
+SHOTS = sys.argv[2]         # where to put screenshots
 SITE = 'https://moodle.example.edu'
 
-# --- статичний сервер для бандла
+# --- static server for the bundle
 Handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=OUT)
 Handler.log_message = lambda *a: None
 srv = http.server.ThreadingHTTPServer(('127.0.0.1', 8765), Handler)
 threading.Thread(target=srv.serve_forever, daemon=True).start()
 APP = 'http://127.0.0.1:8765/index.html'
 
-# --- дані «Moodle» відносно сьогодні
+# --- "Moodle" data relative to today
 now = dt.datetime.now()
 def at(days, h=23, m=59):
     d = (now + dt.timedelta(days=days)).replace(hour=h, minute=m, second=0, microsecond=0)
@@ -109,78 +109,78 @@ with sync_playwright() as pw:
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.on('console', lambda m: errors.append(m.text) if m.type == 'error' else None)
 
-    # 1. Вхід
+    # 1. Login
     page.goto(APP + '?site=moodle.example.edu/my/courses.php')
-    check('поле адреси заповнене з ?site= і нормалізоване', page.input_value('input[name=site]') == SITE)
+    check('address field is pre-filled from ?site= and normalised', page.input_value('input[name=site]') == SITE)
     page.fill('#username', 'maria'); page.fill('#password', 'wrong'); page.click('button[type=submit]')
     page.wait_for_selector('.error:has-text("Неправильний")')
-    check('неправильний пароль показує помилку', True)
-    check('поле пароля очищене після спроби', page.input_value('#password') == '')
+    check('a wrong password shows an error', True)
+    check('the password field is cleared after an attempt', page.input_value('#password') == '')
     page.fill('#password', 'secret'); page.click('button[type=submit]')
     page.wait_for_selector('.hero', timeout=15000)
     page.wait_for_function("!document.querySelector('.loading')")
-    check('дошка завантажилася з іменем користувача', page.inner_text('.who') == 'Марія Шевченко')
+    check('the board loaded with the user name', page.inner_text('.who') == 'Марія Шевченко')
 
-    # 2. Зміст
+    # 2. Content
     bands = page.eval_on_selector_all('.band-head h2', 'els => els.map(e => e.textContent)')
-    check(f'смуги в правильному порядку {bands}', bands == ['Прострочено', 'Цей тиждень', 'Найближчий місяць', 'До кінця семестру', 'Пізніше', 'Без терміну'])
+    check(f'bands in the right order {bands}', bands == ['Прострочено', 'Цей тиждень', 'Найближчий місяць', 'До кінця семестру', 'Пізніше', 'Без терміну'])
     names = page.eval_on_selector_all('.card h3', 'els => els.map(e => e.textContent)')
-    check('подане завдання сховане за замовчуванням', 'Есе: етика праці' not in names)
-    check('«Новини» не потрапили в список', 'Новини' not in names)
-    check('дубль події календаря не з’явився', names.count('Переклад Ів. 1:1–18') == 1)
-    check('тест із календаря є', 'Тест: дієвідміна' in names)
-    check('найближчий дедлайн — сьогоднішній переклад', page.inner_text('.hero-title') == 'Переклад Ів. 1:1–18')
+    check('a submitted task is hidden by default', 'Есе: етика праці' not in names)
+    check('"News" did not get into the list', 'Новини' not in names)
+    check('no duplicate calendar event appeared', names.count('Переклад Ів. 1:1–18') == 1)
+    check('the quiz from the calendar is present', 'Тест: дієвідміна' in names)
+    check('the nearest deadline is today\'s translation', page.inner_text('.hero-title') == 'Переклад Ів. 1:1–18')
     burning = page.eval_on_selector_all('.card.is-burning h3', 'els => els.map(e => e.textContent)')
-    check(f'горять лише 0–2 дні {burning}', sorted(burning) == sorted(['Переклад Ів. 1:1–18', 'Конспект проповіді']))
-    check('зведення світиться', page.locator('.hero.burning').count() == 1)
-    check('«відкриється…» для ще закритого', page.locator('.card:has-text("Проповідь на практиці") .opens').count() == 1)
-    check('посилання відкриваються в новій вкладці', page.get_attribute('.card h3 a', 'target') == '_blank')
-    check('відмінки у смузі', 'завдання' in page.inner_text('.band-week .cnt'))
+    check(f'only 0–2 day tasks burn {burning}', sorted(burning) == sorted(['Переклад Ів. 1:1–18', 'Конспект проповіді']))
+    check('the summary glows', page.locator('.hero.burning').count() == 1)
+    check('"opens…" for a not yet open task', page.locator('.card:has-text("Проповідь на практиці") .opens').count() == 1)
+    check('links open in a new tab', page.get_attribute('.card h3 a', 'target') == '_blank')
+    check('noun forms in the band header', 'завдання' in page.inner_text('.band-week .cnt'))
     page.screenshot(path=f'{SHOTS}/desktop-board.png', full_page=False)
 
-    # 3. Перемикачі й фільтри
+    # 3. Toggles and filters
     page.click('text=Приховати подані')
-    check('«Приховати подані» вимикається й показує подане', page.locator('.card h3:has-text("Есе: етика праці")').count() == 1)
+    check('"Приховати подані" turns off and shows submitted', page.locator('.card h3:has-text("Есе: етика праці")').count() == 1)
     page.click('text=Приховати подані')
     page.click('.chips-toggle')
-    check('чипи розгортаються', page.locator('#courseChips').count() == 1)
+    check('chips expand', page.locator('#courseChips').count() == 1)
     page.click('.chip:has-text("Гомілетика")')
     names = page.eval_on_selector_all('.card h3', 'els => els.map(e => e.textContent)')
-    check(f'фільтр за курсом {names}', set(names) == {'Конспект проповіді', 'Проповідь на практиці'})
+    check(f'course filter {names}', set(names) == {'Конспект проповіді', 'Проповідь на практиці'})
     page.screenshot(path=f'{SHOTS}/desktop-filter.png')
     page.click('.chip.all')
     page.click('.chips-toggle')
-    check('чипи згортаються', page.locator('#courseChips').count() == 0)
+    check('chips collapse', page.locator('#courseChips').count() == 0)
 
-    # 4. Галочка «Виконано» переживає перезавантаження
+    # 4. The "Виконано" tick survives a reload
     card = page.locator('.card', has_text='Конспект проповіді')
     card.locator('input[type=checkbox]').check()
-    check('виконане перестає горіти', page.locator('.card.is-burning:has-text("Конспект проповіді")').count() == 0)
+    check('a done task stops burning', page.locator('.card.is-burning:has-text("Конспект проповіді")').count() == 0)
     page.reload(); page.wait_for_selector('.hero')
-    check('галочка збереглася після перезавантаження', page.locator('.card:has-text("Конспект проповіді") input[type=checkbox]').is_checked())
-    check('після перезавантаження дані підтягуються знову', calls.count('core_webservice_get_site_info') >= 2)
+    check('the tick survived a reload', page.locator('.card:has-text("Конспект проповіді") input[type=checkbox]').is_checked())
+    check('data is fetched again after a reload', calls.count('core_webservice_get_site_info') >= 2)
     page.locator('.card:has-text("Конспект проповіді") input[type=checkbox]').uncheck()
 
-    # 5. Тема
+    # 5. Theme
     page.click('text=Тема: як у системі')
     page.click('text=Тема: світла')
-    check('темна тема вмикається', page.evaluate("document.documentElement.dataset.theme") == 'dark')
+    check('dark theme turns on', page.evaluate("document.documentElement.dataset.theme") == 'dark')
     page.screenshot(path=f'{SHOTS}/desktop-dark.png')
     page.click('text=Тема: темна')
-    check('повернення до системної теми', page.evaluate("document.documentElement.dataset.theme") is None)
+    check('back to the system theme', page.evaluate("document.documentElement.dataset.theme") is None)
 
-    # 6. Вихід
+    # 6. Logout
     page.click('text=Вийти')
-    check('вікно підтвердження відкрилося', page.locator('dialog.confirm[open]').count() == 1)
+    check('the confirmation dialog opened', page.locator('dialog.confirm[open]').count() == 1)
     page.screenshot(path=f'{SHOTS}/desktop-logout.png')
     page.keyboard.press('Escape')
-    check('Esc лише закриває', page.locator('dialog.confirm[open]').count() == 0 and page.locator('.hero').count() == 1)
+    check('Esc only closes it', page.locator('dialog.confirm[open]').count() == 0 and page.locator('.hero').count() == 1)
     page.click('text=Вийти'); page.click('dialog .btn.danger')
     page.wait_for_selector('form.panel')
-    check('після виходу токен видалено', page.evaluate("localStorage.getItem('md.token')") is None)
-    check('після виходу галочки лишилися', page.evaluate("localStorage.getItem('md.done')") is not None)
+    check('the token is removed after logout', page.evaluate("localStorage.getItem('md.token')") is None)
+    check('ticks remain after logout', page.evaluate("localStorage.getItem('md.done')") is not None)
 
-    # 7. Телефон
+    # 7. Phone
     m = b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=3, is_mobile=True, has_touch=True, locale='uk-UA', timezone_id='Europe/Kyiv')
     m.route(f'{SITE}/**', handle)
     mp = m.new_page()
@@ -191,24 +191,24 @@ with sync_playwright() as pw:
     mp.wait_for_selector('.hero'); mp.wait_for_function("!document.querySelector('.loading')")
     mp.screenshot(path=f'{SHOTS}/phone-board.png')
     no_hscroll = mp.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
-    check('на телефоні немає горизонтальної прокрутки', no_hscroll)
+    check('no horizontal scroll on the phone', no_hscroll)
     mp.evaluate("window.scrollTo(0, document.querySelector('.band-month').offsetTop - 10)")
     mp.screenshot(path=f'{SHOTS}/phone-month.png')
 
-    # 7б. Поріг «горить» з адреси
+    # 7b. The "burning" threshold from the URL
     mp.goto(APP + '?burnDays=7'); mp.wait_for_selector('.hero'); mp.wait_for_function("!document.querySelector('.loading')")
     n7 = mp.locator('.card.is-burning').count()
-    check(f'?burnDays=7 підпалює весь тиждень ({n7})', n7 >= 4)
+    check(f'?burnDays=7 sets the whole week on fire ({n7})', n7 >= 4)
 
-    # 8. Застарілий токен → назад на вхід
+    # 8. Stale token → back to login
     mp.evaluate("localStorage.setItem('md.token', JSON.stringify('EXPIRED'))")
     mp.reload()
     mp.wait_for_selector('.error:has-text("Доступ застарів")', timeout=15000)
-    check('застарілий токен повертає на вхід із поясненням', True)
+    check('a stale token returns to login with an explanation', True)
 
     real_errors = [e for e in errors if 'fonts.g' not in e and 'ERR_FAILED' not in e]
-    check(f'немає помилок у консолі {real_errors}', not real_errors)
-    check('викликалися лише функції читання', all('_get_' in c for c in calls))
+    check(f'no console errors {real_errors}', not real_errors)
+    check('only read functions were called', all('_get_' in c for c in calls))
     b.close()
 
 srv.shutdown()

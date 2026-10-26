@@ -4,8 +4,8 @@ import { toText } from './text';
 import { normSite, safeUrl } from './url';
 
 /**
- * Клієнт Moodle Web Services — того самого API, яким користується мобільний застосунок Moodle.
- * Сайт викликає лише функції читання: у Moodle нічого не змінюється.
+ * Moodle Web Services client: the same API the Moodle mobile app uses.
+ * The site calls read functions only: nothing in Moodle changes.
  */
 
 export class MoodleError extends Error {
@@ -15,7 +15,7 @@ export class MoodleError extends Error {
   }
 }
 
-/** Токен застарів або відкликаний: треба увійти ще раз. */
+/** The token is stale or revoked: the user must log in again. */
 export const isAuthError = (e: unknown) =>
   e instanceof MoodleError && (e.code === 'invalidtoken' || e.code === 'accessexception');
 
@@ -24,7 +24,7 @@ const netError = () =>
     'Браузер не отримав відповіді від Moodle. Перевірте інтернет і адресу сайту. Якщо все правильно, відкрийте консоль (F12): помилка CORS означає, що цей Moodle не дозволяє запити з інших сайтів.',
   );
 
-/** { courseids: [1, 2] } → courseids[0]=1&courseids[1]=2 — так Moodle чекає масиви й об'єкти. */
+/** { courseids: [1, 2] } → courseids[0]=1&courseids[1]=2 — the way Moodle expects arrays and objects. */
 export function flatten(obj: Record<string, unknown>, prefix = '', out = new URLSearchParams()): URLSearchParams {
   for (const [k, v] of Object.entries(obj)) {
     const key = prefix ? `${prefix}[${k}]` : k;
@@ -34,7 +34,7 @@ export function flatten(obj: Record<string, unknown>, prefix = '', out = new URL
   return out;
 }
 
-/** Обмін логіна й пароля на токен мобільного застосунку. Пароль ніде не зберігається. */
+/** Exchanges a login and password for a mobile app token. The password is never stored. */
 export async function getToken(site: string, username: string, password: string): Promise<string> {
   const body = new URLSearchParams({ username, password, service: 'moodle_mobile_app' });
   let r: Response;
@@ -84,7 +84,7 @@ export function createClient(site: string, token: string) {
   };
 }
 
-/** Виконує fn для кожного елемента, не більше n одночасно. */
+/** Runs fn for each item, at most n at a time. */
 async function pool<T>(list: T[], n: number, fn: (x: T) => Promise<void>) {
   let i = 0;
   await Promise.all(
@@ -96,7 +96,7 @@ async function pool<T>(list: T[], n: number, fn: (x: T) => Promise<void>) {
 
 const nowSec = () => Math.floor(Date.now() / 1000);
 
-/** Збирає курси, завдання, форуми, події календаря й статуси подань в один зліпок. */
+/** Collects courses, assignments, forums, calendar events and submission statuses into one snapshot. */
 export async function collectSnapshot(
   site: string,
   token: string,
@@ -113,7 +113,7 @@ export async function collectSnapshot(
     (!c.startdate || c.startdate <= now) && (!c.enddate || c.enddate > now) && !c.completed && !c.hidden;
   let rawCourses: any[];
   try {
-    // Та сама вибірка, що й вкладка «Поточні» на сторінці «Мої курси».
+    // The same selection as the "In progress" tab on the "My courses" page.
     const res = await ws<{ courses?: any[] }>('core_course_get_enrolled_courses_by_timeline_classification', {
       classification: 'inprogress',
       limit: 0,
@@ -181,7 +181,7 @@ export async function collectSnapshot(
 
   for (const f of Array.isArray(forums) ? forums : []) {
     const cmid = Number(f.cmid);
-    if (f.type === 'news' || seen.has(cmid)) continue; // «Новини» — це оголошення, не завдання
+    if (f.type === 'news' || seen.has(cmid)) continue; // "News" is an announcement forum, not an assignment
     seen.add(cmid);
     items.push({
       key: `forum-${cmid}`,
@@ -198,14 +198,14 @@ export async function collectSnapshot(
     });
   }
 
-  // Тести, семінари та інше, що має подію в календарі.
+  // Quizzes, workshops and other things that have a calendar event.
   for (const g of evs.groupedbycourse || []) {
     for (const e of g.events || []) {
       let cmid: number | null = null;
       try {
         cmid = Number(new URL(e.url).searchParams.get('id')) || null;
       } catch {
-        /* подія без посилання */
+        /* event without a link */
       }
       if (cmid && seen.has(cmid)) continue;
       const key = `${String(e.modulename || 'event').replace(/[^a-z0-9_]/gi, '')}-${cmid || Number(e.id)}`;
@@ -248,8 +248,8 @@ export async function collectSnapshot(
 }
 
 /**
- * Дані з кешу браузера могли бути змінені вручну: приводимо типи, кольори беремо з власної палітри,
- * посилання пропускаємо лише http(s).
+ * Data from the browser cache could have been edited by hand: we coerce types, take colours from our own palette,
+ * and let through only http(s) links.
  */
 export function sanitizeSnapshot(d: Snapshot): Snapshot {
   return {

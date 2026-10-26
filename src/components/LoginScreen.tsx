@@ -6,14 +6,14 @@ import type { LoginScreenProps } from '../types';
 
 type PasswordCredentialCtor = new (data: { id: string; password: string; name?: string }) => Credential;
 
-/** Просимо браузер запам'ятати пароль для цього сайту (Chrome, Edge, Opera). */
+/** Ask the browser to remember the password for this site (Chrome, Edge, Opera). */
 const offerToSavePassword = async (user: string, pass: string) => {
   const PC = (globalThis as unknown as { PasswordCredential?: PasswordCredentialCtor }).PasswordCredential;
   if (!PC || !navigator.credentials) return;
   try {
     await navigator.credentials.store(new PC({ id: user, password: pass, name: user }));
   } catch {
-    /* браузер відмовився — нічого страшного */
+    /* the browser declined — no harm done */
   }
 };
 
@@ -49,7 +49,7 @@ export const LoginScreen = ({ site, remember: rememberInitial, message = '', onL
       setError(err instanceof Error ? err.message : 'Не вдалося увійти.');
       setBusy(false);
     } finally {
-      // Пароль не лишається у формі після спроби входу.
+      // The password does not stay in the form after a login attempt.
       const pw = form.elements.namedItem('password');
       if (pw instanceof HTMLInputElement) pw.value = '';
     }

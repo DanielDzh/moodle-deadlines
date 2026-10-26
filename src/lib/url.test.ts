@@ -19,21 +19,21 @@ describe('normSite', () => {
 describe('safeUrl', () => {
   const base = 'https://moodle.uni.edu';
 
-  it('пропускає http(s)', () => {
+  it('lets http(s) through', () => {
     expect(safeUrl('https://moodle.uni.edu/mod/assign/view.php?id=1', base)).toBe(
       'https://moodle.uni.edu/mod/assign/view.php?id=1',
     );
     expect(safeUrl('/mod/forum/view.php?id=2', base)).toBe('https://moodle.uni.edu/mod/forum/view.php?id=2');
   });
 
-  it('не пропускає javascript: та data:', () => {
+  it('does not let javascript: and data: through', () => {
     expect(safeUrl('javascript:alert(1)', base)).toBe(base);
     expect(safeUrl('data:text/html,<b>x</b>', base)).toBe(base);
   });
 });
 
 describe('checkSite', () => {
-  it('вимагає адресу й https', () => {
+  it('requires an address and https', () => {
     expect(checkSite('')).toMatch(/Вкажіть адресу/);
     expect(checkSite('http://moodle.uni.edu')).toMatch(/https/);
     expect(checkSite('https://moodle.uni.edu')).toBeNull();

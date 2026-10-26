@@ -1,8 +1,8 @@
 const MOODLE_SECTIONS = /\/(my|login|course|mod|user|admin|calendar|grade|message|webservice|lib)(\/.*)?$/i;
 
 /**
- * Адреса Moodle з того, що ввела людина: додає https://, прибирає шлях до сторінки
- * (…/my/courses.php, …/login/index.php), але зберігає підпапку (uni.edu/moodle).
+ * Moodle address from what a person typed: adds https://, strips the page path
+ * (…/my/courses.php, …/login/index.php) but keeps a subfolder (uni.edu/moodle).
  */
 export function normSite(input: unknown): string {
   let s = String(input ?? '').trim();
@@ -20,20 +20,20 @@ export function normSite(input: unknown): string {
   }
 }
 
-/** Посилання лише http(s). Будь-що інше (javascript:, data:…) замінюємо на адресу Moodle. */
+/** Only http(s) links. Anything else (javascript:, data:…) is replaced with the Moodle address. */
 export function safeUrl(u: unknown, base: string): string {
   try {
     const x = new URL(String(u), base || undefined);
     if (x.protocol === 'https:' || x.protocol === 'http:') return x.href;
   } catch {
-    /* некоректна адреса */
+    /* malformed address */
   }
   return base || '#';
 }
 
 export const isLocalHost = (h: string) => h === 'localhost' || h === '127.0.0.1';
 
-/** Пароль не можна слати відкритим текстом: дозволяємо лише https (і http для локального проксі). */
+/** The password must not travel in plain text: only https is allowed (and http for a local proxy). */
 export function checkSite(site: string): string | null {
   if (!site) return 'Вкажіть адресу свого Moodle, наприклад moodle.university.edu.ua.';
   try {
