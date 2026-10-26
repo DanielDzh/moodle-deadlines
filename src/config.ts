@@ -54,6 +54,7 @@ export const KEYS = {
   chipsOpen: 'md.chipsOpen',
   filter: 'md.filter',
   theme: 'md.theme',
+  syncKey: 'md.syncKey',
 } as const;
 
 /**
@@ -86,3 +87,61 @@ export const LOAD_STEPS: { id: Exclude<LoadStage, 'done'>; label: string }[] = [
   { id: 'tasks', label: 'Завдання і терміни' },
   { id: 'statuses', label: 'Статуси здачі' },
 ];
+
+/** Telegram reminders service (the Worker in worker/). */
+/** Overridable with VITE_REMINDERS_API_URL for local development against `wrangler dev`. */
+export const REMINDERS_API_URL: string =
+  import.meta.env.VITE_REMINDERS_API_URL || 'https://moodle-deadlines-bot.tinyapp.workers.dev';
+
+export const REMINDERS = {
+  /** How often to ask whether the student pressed Start in the bot, ms. */
+  pollMs: 3000,
+  /** Wait this long after the last change before pushing tasks, ms. */
+  syncDebounceMs: 1500,
+  /** Network timeout for one request, ms. */
+  requestTimeoutMs: 15000,
+  /** Random bytes in the browser's sync key. */
+  keyBytes: 32,
+} as const;
+
+/** Text of the reminders dialog and its errors (UI text, Ukrainian). */
+export const REMINDER_TEXTS = {
+  button: 'Нагадування',
+  buttonActive: 'Нагадування ✓',
+  title: 'Нагадування в Telegram',
+  intro: 'Бот напише вам у Telegram за добу й за 3 години до кожного неподаного завдання, навіть коли ви не відкриваєте сайт. Вночі (з 23:00 до 08:00) він не турбує.',
+  consentTitle: 'Що для цього зберігається на сервері',
+  consentItems: [
+    'ваш токен доступу до Moodle (у зашифрованому вигляді): через нього сервер сам дивиться нові завдання;',
+    'назви, курси й терміни ваших завдань;',
+    'ваш Telegram-чат і часовий пояс.',
+  ],
+  consentWarning:
+    'Токен дає доступ до вашого акаунта в Moodle, тому підключайте нагадування, лише якщо довіряєте цьому сервісу. Вимкнути нагадування й видалити всі дані можна будь-коли: тут або командою /stop у боті.',
+  consentCheck: 'Я розумію й погоджуюсь',
+  consentRequired: 'Щоб підключити нагадування, підтвердіть згоду.',
+  connect: 'Підключити Telegram',
+  connecting: 'Підключаю…',
+  pendingTitle: 'Лишилось натиснути Start у боті',
+  pendingText: 'Відкрийте бота за кнопкою нижче й натисніть Start. Сторінка сама дізнається, коли ви підтвердите. Посилання діє 10 хвилин.',
+  openBot: 'Відкрити Telegram',
+  waiting: 'Чекаю на підтвердження…',
+  cancel: 'Скасувати',
+  close: 'Закрити',
+  activeTitle: 'Нагадування увімкнено',
+  activeText: 'Бот напише за добу й за 3 години до кожного неподаного завдання. Нові завдання він підхоплює сам.',
+  disable: 'Вимкнути й видалити дані',
+  disabling: 'Вимикаю…',
+  pausedTitle: 'Потрібно підключити знову',
+  pausedText: 'Доступ до Moodle застарів, і нагадування призупинено. Підключіть Telegram ще раз.',
+  logoutNote: 'Нагадування в Telegram теж вимкнеться, а дані на сервері буде видалено. Якщо ви без інтернету, вимкніть їх командою /stop у боті.',
+  errors: {
+    https_required: 'Для нагадувань потрібен Moodle за адресою https.',
+    invalid_site: 'Цю адресу Moodle не можна підключити до нагадувань.',
+    blocked_site: 'Цей Moodle не підтримується нагадуваннями.',
+    invalid_token: 'Токен Moodle має неочікуваний вигляд. Увійдіть на сайті ще раз.',
+    busy: 'Сервіс зараз зайнятий. Спробуйте за хвилину.',
+    network: 'Не вдалося зв’язатися з сервісом нагадувань. Спробуйте ще раз.',
+    default: 'Щось пішло не так. Спробуйте ще раз.',
+  },
+} as const;

@@ -4,6 +4,7 @@ import { BoardView } from './components/BoardView';
 import { LoginScreen } from './components/LoginScreen';
 import { LogoutDialog } from './components/LogoutDialog';
 import { ErrorScreen, LoadingScreen } from './components/StatusScreens';
+import { useReminders } from './hooks/useReminders';
 import { useStoredState } from './hooks/useStoredState';
 import { collectSnapshot, isAuthError, sanitizeSnapshot } from './lib/moodle';
 import { local, readSecret, saveSecret, wipeSecrets } from './lib/storage';
@@ -39,6 +40,7 @@ export function App() {
   const [loginMessage, setLoginMessage] = useState('');
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [theme, setTheme] = useStoredState<Theme>(KEYS.theme, 'auto');
+  const reminders = useReminders({ site, token });
   const busy = useRef(false);
   const [leaving, setLeaving] = useState(false);
   const loaderRef = useRef(true);
@@ -123,6 +125,12 @@ export function App() {
     return <LoginScreen site={site} remember={remember} message={loginMessage} onLoggedIn={onLoggedIn} />;
   }
 
+  const remindersOn = reminders.state === 'active' || reminders.state === 'pending';
+  const handleLogoutConfirm = async () => {
+    // Reminders keep the Moodle token on the server, so turn them off first (best effort: logout never blocks on the network).
+    if (remindersOn) await reminders.disable();
+    logout();
+  };
   const openLogout = () => setConfirmingLogout(true);
   const closeLogout = () => setConfirmingLogout(false);
   const handleRetry = () => {
@@ -141,6 +149,7 @@ export function App() {
         theme={theme}
         onNextTheme={nextTheme}
         onLogout={openLogout}
+        reminders={reminders}
       />
     );
   } else if (error) {
@@ -158,7 +167,7 @@ export function App() {
   return (
     <>
       {screen}
-      {confirmingLogout && <LogoutDialog onConfirm={logout} onClose={closeLogout} />}
+      {confirmingLogout && <LogoutDialog remindersOn={remindersOn} onConfirm={handleLogoutConfirm} onClose={closeLogout} />}
     </>
   );
 }

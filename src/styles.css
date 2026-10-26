@@ -153,6 +153,13 @@ footer p { margin: 4px 0; }
 .loading { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: var(--muted); text-align: center; padding: 18px; }
 .spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: spin .9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+.spinner.small { display: inline-block; width: 16px; height: 16px; border-width: 2px; vertical-align: -3px; }
+dialog.reminders { max-width: min(480px, calc(100vw - 32px)); }
+dialog.reminders .consent-title { font-weight: 600; margin: 14px 0 6px; color: var(--ink); }
+dialog.reminders .consent-list { margin: 0 0 12px; padding-left: 20px; color: var(--muted); font-size: .94rem; display: grid; gap: 4px; }
+dialog.reminders .open-bot { display: inline-block; text-decoration: none; text-align: center; margin: 4px 0 8px; }
+dialog.reminders .waiting { color: var(--muted); font-size: .92rem; }
+dialog.reminders .error { margin: 8px 0 0; }
 .loading { gap: 30px; transition: opacity .22s ease; }
 .loading > div, .loading > .steps { transition: transform .22s ease; }
 .loading.leaving { opacity: 0; }
