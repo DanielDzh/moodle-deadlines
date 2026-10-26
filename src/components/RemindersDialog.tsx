@@ -79,13 +79,17 @@ export const RemindersDialog = ({ api, onClose }: Props) => {
       {showConnect && (
         <>
           <p>{T.intro}</p>
-          <p className="consent-title">{T.consentTitle}</p>
-          <ul className="consent-list">
-            {T.consentItems.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-          <p className="warn-note">{T.consentWarning}</p>
+          <p>{T.consentShort}</p>
+          <details className="more-info">
+            <summary>{T.moreInfo}</summary>
+            <p className="consent-title">{T.consentTitle}</p>
+            <ul className="consent-list">
+              {T.consentItems.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+            <p className="warn-note">{T.consentWarning}</p>
+          </details>
           <label className="remember">
             <input type="checkbox" checked={agreed} onChange={handleAgreeChange} />
             {T.consentCheck}
