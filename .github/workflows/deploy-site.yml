@@ -36,4 +36,13 @@ jobs:
           node-version-file: .nvmrc
       - run: npm install
       - run: npm test
-      - run: npm run deploy
+      - run: npm run build
+      # Cloudflare's asset upload sometimes fails with a transient error (code 10013) that disappears on a retry.
+      - name: Deploy (up to 3 attempts)
+        run: |
+          for attempt in 1 2 3; do
+            if npx wrangler@4.153.0 deploy; then exit 0; fi
+            echo "::warning::Deploy attempt $attempt failed"
+            sleep 20
+          done
+          exit 1
