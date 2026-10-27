@@ -50,12 +50,13 @@ export const handleApi = async (request: Request, deps: ApiDeps): Promise<Respon
     if (route === 'GET /api/link/status' || route === 'POST /api/sync' || route === 'POST /api/unlink') {
       const syncKey = parseBearer(request);
       if (!syncKey) return json({ error: 'unauthorized' }, 401);
-      const user = await deps.repo.findBySyncKeyHash(await sha256Hex(syncKey));
+      const keyHash = await sha256Hex(syncKey);
+      const user = await deps.repo.findBySyncKeyHash(keyHash);
 
       if (route === 'GET /api/link/status') return json({ state: stateOf(user?.status) });
 
       if (route === 'POST /api/unlink') {
-        if (user) await deps.repo.deleteUser(user.id);
+        await deps.repo.deleteUsersBySyncKey(keyHash);
         return json({ ok: true });
       }
 
@@ -86,11 +87,14 @@ const linkStart = async (request: Request, deps: ApiDeps, now: number): Promise<
   const id = generateUserId();
   const code = generateLinkCode();
   const expires = now + LINK_CODE_TTL_SEC;
+  const syncKeyHash = await sha256Hex(parsed.value.syncKey);
+  // A new attempt replaces this browser's older unfinished ones, so they cannot pile up.
+  await deps.repo.deletePendingBySyncKey(syncKeyHash);
   await deps.repo.createPending({
     id,
     code,
     expires,
-    syncKeyHash: await sha256Hex(parsed.value.syncKey),
+    syncKeyHash,
     site: site.site,
     tokenEnc: await encryptToken(parsed.value.token, deps.tokenKey, id),
     tz: parsed.value.tz,

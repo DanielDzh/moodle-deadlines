@@ -45,7 +45,7 @@ Status: stages 1-3 done (Worker skeleton, schema, token encryption, reminder pla
 1. Skeleton, D1 schema, token encryption, a pure "what to send now" function + tests. **Done.**
 2. Bot: webhook, `/start`, `/stop`, `/status`, `/help`. **Done** and deployed.
 3. Linking and sync: endpoints, validation, limits, site dialog. **Done**, verified end to end locally (`wrangler dev` + local D1): link, simulated Start through the real webhook, task sync, done flag sync, logout cleanup.
-4. Server-side refresh from Moodle + cron delivery + buttons.
+4. Server-side refresh from Moodle + cron delivery + buttons. Also a scheduled cleanup: expired unfinished link attempts (they hold an encrypted token until purged), tasks 7 days past their deadline, users inactive for 60 days.
 5. Site UI: states, consent, deletion. Privacy text.
 6. Deploy, verify on a real account, verify data deletion.
 

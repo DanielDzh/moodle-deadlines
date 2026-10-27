@@ -110,5 +110,8 @@ export interface ApiRepo {
   findBySyncKeyHash: (hash: string) => Promise<{ id: string; status: string } | null>;
   /** Makes the user's tracked tasks equal to the given list (keeps the per-task "muted" flag). Returns the count. */
   replaceTasks: (userId: string, tasks: readonly SyncTask[], now: number) => Promise<number>;
-  deleteUser: (userId: string) => Promise<void>;
+  /** Removes every user (and their tasks and sent reminders) that belongs to this browser key. */
+  deleteUsersBySyncKey: (hash: string) => Promise<void>;
+  /** Removes only the unfinished link attempts of this browser key. */
+  deletePendingBySyncKey: (hash: string) => Promise<void>;
 }

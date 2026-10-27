@@ -22,7 +22,12 @@ const memory = () => {
       return found ? { id: found.id, status: found.status } : null;
     },
     replaceTasks: async (id, list) => (tasks.set(id, [...list]), list.length),
-    deleteUser: async (id) => (users.delete(id), tasks.delete(id), undefined),
+    deleteUsersBySyncKey: async (hash) => {
+      for (const [id, u] of users) if (u.syncKeyHash === hash) (users.delete(id), tasks.delete(id));
+    },
+    deletePendingBySyncKey: async (hash) => {
+      for (const [id, u] of users) if (u.syncKeyHash === hash && u.status === 'pending') users.delete(id);
+    },
   };
   return { repo, users, tasks };
 };
@@ -114,6 +119,36 @@ describe('site API', () => {
     expect(users.size).toBe(0);
     expect(tasks.size).toBe(0);
     expect((await call('POST', '/api/unlink')).status).toBe(200);
+  });
+
+  it('a new link attempt replaces the same browser\'s older unfinished one', async () => {
+    const { call, users } = setup();
+    await call('POST', '/api/link/start', start, null);
+    await call('POST', '/api/link/start', start, null);
+    await call('POST', '/api/link/start', start, null);
+    expect(users.size).toBe(1);
+  });
+
+  it('unlink removes every record of the browser key, not just one', async () => {
+    const { call, users, tasks } = setup();
+    await call('POST', '/api/link/start', start, null);
+    const [first] = [...users.values()];
+    first.status = 'active';
+    // A second record with the same key (an older unfinished attempt that survived).
+    users.set('stray', { ...first, id: 'stray', status: 'pending' });
+    tasks.set('stray', [{ key: 'x', name: 'n', course: '', url: '', due: NOW + 1, done: false, submitted: false }]);
+    await call('POST', '/api/unlink');
+    expect(users.size).toBe(0);
+    expect(tasks.size).toBe(0);
+  });
+
+  it('unlink leaves other browsers alone', async () => {
+    const { call, users } = setup();
+    await call('POST', '/api/link/start', start, null);
+    await call('POST', '/api/link/start', { ...start, syncKey: 'z'.repeat(40) }, null);
+    await call('POST', '/api/unlink');
+    expect(users.size).toBe(1);
+    expect([...users.values()][0].syncKeyHash).toBe(await sha256Hex('z'.repeat(40)));
   });
 
   it('expired pending links are cleaned up and the pending cap protects the database', async () => {

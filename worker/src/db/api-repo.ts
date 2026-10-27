@@ -67,7 +67,11 @@ export const createApiRepo = (db: D1Database): ApiRepo => ({
     return tasks.length;
   },
 
-  deleteUser: async (userId) => {
-    await db.prepare('DELETE FROM users WHERE id = ?1').bind(userId).run();
+  deleteUsersBySyncKey: async (hash) => {
+    await db.prepare('DELETE FROM users WHERE sync_key_hash = ?1').bind(hash).run();
+  },
+
+  deletePendingBySyncKey: async (hash) => {
+    await db.prepare("DELETE FROM users WHERE sync_key_hash = ?1 AND status = 'pending'").bind(hash).run();
   },
 });
