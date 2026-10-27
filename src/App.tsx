@@ -129,7 +129,14 @@ export function App() {
   );
 
   if (!token) {
-    return <LoginScreen site={site} remember={remember} message={loginMessage} onLoggedIn={onLoggedIn} />;
+    return <LoginScreen
+        site={site}
+        remember={remember}
+        message={loginMessage}
+        theme={theme}
+        onNextTheme={nextTheme}
+        onLoggedIn={onLoggedIn}
+      />;
   }
 
   const remindersOn = reminders.state === 'active' || reminders.state === 'pending';

@@ -78,6 +78,8 @@ export interface LoginScreenProps {
   site: string;
   remember: boolean;
   message?: string;
+  theme: Theme;
+  onNextTheme: () => void;
   onLoggedIn: (session: LoginSession) => void;
 }
 

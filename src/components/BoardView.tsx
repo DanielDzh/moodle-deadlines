@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BURN_DAYS, KEYS, REMINDER_TEXTS } from '../config';
+import { BURN_DAYS, KEYS, REMINDER_TEXTS, THEME_LABEL } from '../config';
 import { useStoredState } from '../hooks/useStoredState';
 import { useMinute } from '../hooks/useMinute';
 import { track } from '../lib/analytics';
@@ -13,12 +13,6 @@ import { Filters } from './Filters';
 import { RemindersDialog } from './RemindersDialog';
 import { RemindersHint } from './RemindersHint';
 import { Summary } from './Summary';
-
-const THEME_LABEL: Record<Theme, string> = {
-  auto: 'Тема: як у системі',
-  light: 'Тема: світла',
-  dark: 'Тема: темна',
-};
 
 interface Props {
   snapshot: Snapshot;
