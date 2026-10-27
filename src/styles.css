@@ -273,18 +273,18 @@ dialog.reminders .waiting { display: flex; align-items: center; justify-content:
 .pending-hint { margin: 0; text-align: center; color: var(--muted); font-size: .84rem; }
 
 /* First-visit reminders hint: a solid callout with an arrow under the reminders button, which pulses until the hint is closed */
-.hint-anchor { position: relative; display: inline-flex; }
-.hint-anchor.has-hint::before { content: ''; position: absolute; top: calc(100% + 5px); left: 50%; z-index: 5; width: 14px; height: 14px; border-radius: 2px; background: var(--accent); transform: translateX(-50%) rotate(45deg); animation: hint-fade .45s ease; }
-.hint-anchor.has-hint::after { content: ''; position: absolute; inset: -3px; border: 1.5px solid var(--accent); border-radius: 999px; pointer-events: none; animation: hint-ping 1.8s ease-out infinite; }
-.hint { position: absolute; top: calc(100% + 12px); left: 0; z-index: 5; display: flex; align-items: flex-start; gap: 6px; width: max-content; max-width: min(250px, calc(100vw - 36px)); padding: 10px 8px 10px 14px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 18%, transparent); animation: hint-in .45s cubic-bezier(.22, 1, .36, 1); }
-.hint p { margin: 0; font-size: .88rem; line-height: 1.4; }
-.hint-close { flex: none; width: 1.6rem; height: 1.6rem; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 1.1rem; line-height: 1; cursor: pointer; opacity: .8; transition: background-color .25s ease, opacity .25s ease; }
-.hint-close:hover { background: color-mix(in srgb, var(--accent-ink) 16%, transparent); opacity: 1; }
-.hint-close:focus-visible { outline-color: var(--accent-ink); }
-@keyframes hint-in { from { opacity: 0; transform: translateY(-8px) scale(.96); } to { opacity: 1; transform: none; } }
-@keyframes hint-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes hint-ping { 0% { transform: scale(1); opacity: .8; } 100% { transform: scale(1.18, 1.5); opacity: 0; } }
+.rem-hint-anchor { position: relative; display: inline-flex; }
+.rem-hint-anchor.has-rem-hint::before { content: ''; position: absolute; top: calc(100% + 5px); left: 50%; z-index: 5; width: 14px; height: 14px; border-radius: 2px; background: var(--accent); transform: translateX(-50%) rotate(45deg); animation: rem-hint-fade .45s ease; }
+.rem-hint-anchor.has-rem-hint::after { content: ''; position: absolute; inset: -3px; border: 1.5px solid var(--accent); border-radius: 999px; pointer-events: none; animation: rem-hint-ping 1.8s ease-out infinite; }
+.rem-hint { position: absolute; top: calc(100% + 12px); left: 0; z-index: 5; display: flex; align-items: flex-start; gap: 6px; width: max-content; max-width: min(250px, calc(100vw - 36px)); padding: 10px 8px 10px 14px; border-radius: 12px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 18%, transparent); animation: rem-hint-in .45s cubic-bezier(.22, 1, .36, 1); }
+.rem-hint p { margin: 0; font-size: .88rem; line-height: 1.4; }
+.rem-hint-close { flex: none; width: 1.6rem; height: 1.6rem; padding: 0; border: 0; border-radius: 50%; background: transparent; color: inherit; font-size: 1.1rem; line-height: 1; cursor: pointer; opacity: .8; transition: background-color .25s ease, opacity .25s ease; }
+.rem-hint-close:hover { background: color-mix(in srgb, var(--accent-ink) 16%, transparent); opacity: 1; }
+.rem-hint-close:focus-visible { outline-color: var(--accent-ink); }
+@keyframes rem-hint-in { from { opacity: 0; transform: translateY(-8px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes rem-hint-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rem-hint-ping { 0% { transform: scale(1); opacity: .8; } 100% { transform: scale(1.18, 1.5); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
-  .hint, .hint-anchor.has-hint::before, .hint-anchor.has-hint::after { animation: none; }
-  .hint-close { transition: none; }
+  .rem-hint, .rem-hint-anchor.has-rem-hint::before, .rem-hint-anchor.has-rem-hint::after { animation: none; }
+  .rem-hint-close { transition: none; }
 }
