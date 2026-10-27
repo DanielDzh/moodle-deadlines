@@ -57,6 +57,21 @@ export const DELIVERY = {
   requestTimeoutMs: 10_000,
 } as const;
 
+/** Fetching tasks from Moodle on behalf of users. */
+export const MOODLE = {
+  /** A user's data is refreshed at most this often, seconds. A failure doubles the wait, up to 16x. */
+  refreshIntervalSec: 3 * 3600,
+  maxFailureBackoffPower: 4,
+  /** Submission statuses are fetched only for assignments due within this window, seconds. */
+  statusWindowSec: 7 * 24 * 3600,
+  /** At most this many status calls per refresh, to stay far below the Worker's subrequest limit. */
+  maxStatusCalls: 15,
+  statusConcurrency: 4,
+  requestTimeoutMs: 10_000,
+  maxResponseBytes: 2 * 1024 * 1024,
+  userAgent: 'moodle-deadlines-bot (+https://github.com/DanielDzh/moodle-deadlines)',
+} as const;
+
 export const TELEGRAM_API_BASE = 'https://api.telegram.org';
 
 /** Encrypted token: the format version is a prefix so the algorithm can be changed later. */

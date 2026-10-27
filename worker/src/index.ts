@@ -5,6 +5,7 @@ import { createUsersRepo } from './db/users-repo';
 import { handleApi } from './api/handlers';
 import { createApiRepo } from './db/api-repo';
 import { corsHeadersFor, parseOrigins } from './lib/cors';
+import { devSiteCheck } from './lib/dev-site-check';
 import { parseBlockedSites } from './lib/site-url';
 import { secretsMatch } from './lib/secure-compare';
 import { runScheduled } from './services/scheduled';
@@ -32,7 +33,7 @@ const handleSiteApi = async (request: Request, env: Env): Promise<Response> => {
     tokenKey: env.TOKEN_KEY,
     botUsername: env.BOT_USERNAME,
     blockedSites: parseBlockedSites(env.BLOCKED_SITES),
-    siteCheck: env.DEV_ALLOW_ANY_SITE === '1' ? (input) => ({ ok: true, site: String(input).replace(/\/+$/, '') }) : undefined,
+    siteCheck: env.DEV_ALLOW_ANY_SITE === '1' ? devSiteCheck : undefined,
   });
   for (const [name, value] of Object.entries(cors ?? {})) response.headers.set(name, value);
   return response;
