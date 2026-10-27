@@ -4,6 +4,8 @@
 urgent to the furthest away. Sign in with your Moodle account and see at a glance what is overdue,
 what is due this week and what is burning right now.
 
+**Live: [moodle-dedlainy.tinyapp.workers.dev](https://moodle-dedlainy.tinyapp.workers.dev)**
+
 Works with any Moodle that allows the official Moodle mobile app. No sign-up, nothing changes in
 Moodle, and by default no backend: the site talks to your Moodle straight from the browser. Optional
 [Telegram reminders](#telegram-reminders-optional) add a small server, only if you turn them on.
