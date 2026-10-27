@@ -3,6 +3,8 @@ import { DEFAULT_SITE } from '../config';
 import { getToken } from '../lib/moodle';
 import { checkSite, hostOf, normSite } from '../lib/url';
 import type { LoginScreenProps } from '../types';
+import { Checkbox } from './Checkbox';
+import { Disclosure } from './Disclosure';
 
 type PasswordCredentialCtor = new (data: { id: string; password: string; name?: string }) => Credential;
 
@@ -72,10 +74,7 @@ export const LoginScreen = ({ site, remember: rememberInitial, message = '', onL
           Пароль
           <input name="password" id="password" type="password" autoComplete="current-password" />
         </label>
-        <label className="remember">
-          <input type="checkbox" name="remember" defaultChecked={rememberInitial} />
-          Запам’ятати на цьому пристрої
-        </label>
+        <Checkbox name="remember" defaultChecked={rememberInitial} label="Запам’ятати на цьому пристрої" />
         <button className="btn primary" type="submit" disabled={busy}>
           {busy ? 'Входжу…' : 'Увійти й завантажити завдання'}
         </button>
@@ -84,8 +83,7 @@ export const LoginScreen = ({ site, remember: rememberInitial, message = '', onL
           мобільного застосунку Moodle. На чужому комп’ютері зніміть «Запам’ятати»: тоді токен зникне, щойно ви
           закриєте вкладку.
         </p>
-        <details open={normSite(site) !== DEFAULT_SITE}>
-          <summary>Інший Moodle або вхід через Google</summary>
+        <Disclosure summary="Інший Moodle або вхід через Google" defaultOpen={normSite(site) !== DEFAULT_SITE}>
           <label>
             Адреса вашого Moodle
             <input
@@ -107,7 +105,7 @@ export const LoginScreen = ({ site, remember: rememberInitial, message = '', onL
             Токен (якщо входите через Google чи інший зовнішній сервіс)
             <input name="token" autoComplete="off" spellCheck={false} />
           </label>
-        </details>
+        </Disclosure>
         <div className="error" role="alert">
           {error}
         </div>

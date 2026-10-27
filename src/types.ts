@@ -80,3 +80,33 @@ export interface LoginScreenProps {
   message?: string;
   onLoggedIn: (session: LoginSession) => void;
 }
+
+/** Link state of the Telegram reminders as the site sees it. */
+export type ReminderState = 'unknown' | 'none' | 'pending' | 'active' | 'paused' | 'unavailable';
+
+/** One task as it is pushed to the reminders service. */
+export interface ReminderItem {
+  key: string;
+  name: string;
+  course: string;
+  url: string;
+  due: number;
+  done: boolean;
+  submitted: boolean;
+}
+
+/** Everything the UI needs from the reminders feature. */
+export interface RemindersApi {
+  state: ReminderState;
+  /** t.me link with the one-time code while a link is pending. */
+  botUrl: string;
+  /** User-facing error text, empty when there is none. */
+  error: string;
+  busy: boolean;
+  start: () => Promise<void>;
+  /** Stops a pending link or turns reminders off and deletes the server-side data. True on success. */
+  disable: () => Promise<boolean>;
+  /** Pushes the current tasks to the service shortly (debounced); does nothing unless reminders are active. */
+  syncSoon: (snapshot: Snapshot, done: Record<string, boolean>) => void;
+  clearError: () => void;
+}

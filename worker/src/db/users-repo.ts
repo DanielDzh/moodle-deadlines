@@ -4,13 +4,15 @@ import type { BotRepo } from '../bot/types';
 export const createUsersRepo = (db: D1Database): BotRepo => ({
   bindChat: async (code, chatId, now) => {
     const pending = await db
-      .prepare("SELECT id FROM users WHERE link_code = ?1 AND link_expires > ?2 AND status = 'pending'")
+      .prepare("SELECT id, sync_key_hash FROM users WHERE link_code = ?1 AND link_expires > ?2 AND status = 'pending'")
       .bind(code, now)
-      .first<{ id: string }>();
+      .first<{ id: string; sync_key_hash: string }>();
     if (!pending) return false;
-    // One chat has one subscription: an older one for the same chat is replaced. Order matters (UNIQUE chat_id).
+    // One chat has one subscription and one browser has one subscription: older ones are replaced.
+    // Order matters (UNIQUE chat_id): delete first, then update.
     await db.batch([
       db.prepare('DELETE FROM users WHERE chat_id = ?1').bind(chatId),
+      db.prepare('DELETE FROM users WHERE sync_key_hash = ?1 AND id != ?2').bind(pending.sync_key_hash, pending.id),
       db
         .prepare(
           "UPDATE users SET chat_id = ?1, status = 'active', link_code = NULL, link_expires = NULL WHERE id = ?2",

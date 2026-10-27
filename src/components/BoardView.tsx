@@ -1,13 +1,14 @@
-import { useCallback, useMemo } from 'react';
-import { BURN_DAYS, KEYS } from '../config';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { BURN_DAYS, KEYS, REMINDER_TEXTS } from '../config';
 import { useStoredState } from '../hooks/useStoredState';
 import { useMinute } from '../hooks/useMinute';
 import { buildBoard } from '../lib/board';
 import { fmtDateTime, fmtDayLong } from '../lib/dates';
-import type { Course, Snapshot, Theme } from '../types';
+import type { Course, RemindersApi, Snapshot, Theme } from '../types';
 import { BandSection } from './BandSection';
 import { DonateLink } from './DonateLink';
 import { Filters } from './Filters';
+import { RemindersDialog } from './RemindersDialog';
 import { Summary } from './Summary';
 
 const THEME_LABEL: Record<Theme, string> = {
@@ -22,6 +23,7 @@ interface Props {
   theme: Theme;
   onNextTheme: () => void;
   onLogout: () => void;
+  reminders: RemindersApi;
 }
 
 /** The "burning" threshold can be changed temporarily in the URL: ?burnDays=7 — handy to preview the effect. */
@@ -36,7 +38,7 @@ function burnDaysFromUrl(): number {
   return BURN_DAYS;
 }
 
-export function BoardView({ snapshot, error, theme, onNextTheme, onLogout }: Props) {
+export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, reminders }: Props) {
   const minute = useMinute();
   const [done, setDone] = useStoredState<Record<string, boolean>>(KEYS.done, {});
   const [hideDone, setHideDone] = useStoredState(KEYS.hideDone, false);
@@ -44,6 +46,15 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout }: Pro
   const [chipsOpen, setChipsOpen] = useStoredState(KEYS.chipsOpen, false);
   const [filter, setFilter] = useStoredState<number[]>(KEYS.filter, []);
   const burnDays = useMemo(burnDaysFromUrl, []);
+  const [remindersOpen, setRemindersOpen] = useState(false);
+  const openReminders = () => setRemindersOpen(true);
+  const closeReminders = () => setRemindersOpen(false);
+
+  // Push the tasks to the reminders service after every refresh and every tick change (debounced inside the hook).
+  const { syncSoon, state: remindersState } = reminders;
+  useEffect(() => {
+    syncSoon(snapshot, done);
+  }, [syncSoon, remindersState, snapshot, done]);
 
   const board = useMemo(
     () => buildBoard(snapshot, { done, filter, hideDone, hideSubmitted, burnDays }),
@@ -85,6 +96,9 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout }: Pro
         </div>
         <div className="actions">
           <DonateLink variant="icon" />
+          <button type="button" className="btn ghost" onClick={openReminders}>
+            🔔 {remindersState === 'active' ? REMINDER_TEXTS.buttonActive : REMINDER_TEXTS.button}
+          </button>
           <button type="button" className="btn ghost" onClick={onNextTheme}>
             {THEME_LABEL[theme]}
           </button>
@@ -132,6 +146,7 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout }: Pro
           лише в цьому браузері.
         </p>
       </footer>
+      {remindersOpen && <RemindersDialog api={reminders} onClose={closeReminders} />}
     </div>
   );
 }

@@ -24,7 +24,25 @@ export const LIMITS = {
   maxNameLength: 200,
   maxCourseLength: 120,
   maxUrlLength: 500,
+  maxKeyLength: 100,
+  /** Unfinished link attempts allowed at once; protects the database from being filled with junk. */
+  maxPendingUsers: 1000,
 } as const;
+
+/** How long a one-time link code stays valid, seconds. */
+export const LINK_CODE_TTL_SEC = 10 * 60;
+
+/** Shapes of values the site sends. */
+export const PATTERNS = {
+  /** The browser's random sync key (a bearer secret for the site API). */
+  syncKey: /^[A-Za-z0-9_-]{32,128}$/,
+  /** A Moodle web-service token (hex, sometimes longer or with a separator). */
+  moodleToken: /^[A-Za-z0-9._-]{16,128}$/,
+  taskKey: /^[A-Za-z0-9._:-]{1,100}$/,
+} as const;
+
+/** Latest sensible deadline (year 2100), seconds. */
+export const MAX_DUE = 4_102_444_800;
 
 /** Encrypted token: the format version is a prefix so the algorithm can be changed later. */
 export const TOKEN_FORMAT_VERSION = 'v1';
