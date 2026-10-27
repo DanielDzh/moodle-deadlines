@@ -26,7 +26,7 @@ export const planReminders = ({ tasks, sent, now, tz }: PlannerInput): PlannedRe
   if (isQuietAt(now, tz, QUIET_HOURS)) return [];
   const planned: PlannedReminder[] = [];
   for (const task of tasks) {
-    if (!task.due || task.due <= now || task.done || task.submitted || task.muted) continue;
+    if (!task.due || task.due <= now || task.done || task.submitted || task.muted || task.snoozeUntil > now) continue;
     const times = REMINDER_OFFSETS.map((o) => ({ kind: o.kind, at: sendTime(task.due, o.seconds, tz) }));
     times.forEach((current, i) => {
       if (current.at > now) return;

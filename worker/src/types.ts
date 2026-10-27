@@ -15,6 +15,8 @@ export interface Env {
   BLOCKED_SITES?: string;
   /** "1" skips the Moodle address check so a local mock Moodle works. Set only in .dev.vars, never in production. */
   DEV_ALLOW_ANY_SITE?: string;
+  /** Overrides https://api.telegram.org, so local runs can talk to a stand-in server. */
+  TELEGRAM_API_BASE?: string;
 }
 
 export type ReminderKind = '24h' | '3h';
@@ -41,6 +43,8 @@ export interface PlannerTask {
   submitted: boolean;
   /** The user turned reminders off for this task with the "Already done" button. */
   muted: boolean;
+  /** "Remind me later": no reminders before this Unix time; 0 — not snoozed. */
+  snoozeUntil: number;
 }
 
 export interface PlannerInput {

@@ -7,6 +7,7 @@ import { createApiRepo } from './db/api-repo';
 import { corsHeadersFor, parseOrigins } from './lib/cors';
 import { parseBlockedSites } from './lib/site-url';
 import { secretsMatch } from './lib/secure-compare';
+import { runScheduled } from './services/scheduled';
 import type { Env } from './types';
 
 const WEBHOOK_SECRET_HEADER = 'X-Telegram-Bot-Api-Secret-Token';
@@ -17,7 +18,7 @@ const handleTelegram = async (request: Request, env: Env): Promise<Response> => 
   if (!provided || !(await secretsMatch(provided, env.TELEGRAM_WEBHOOK_SECRET))) {
     return new Response('Unauthorized', { status: 401 });
   }
-  const bot = createBot(env.TELEGRAM_BOT_TOKEN, env.BOT_USERNAME, createBotCore(createUsersRepo(env.DB)));
+  const bot = createBot(env.TELEGRAM_BOT_TOKEN, env.BOT_USERNAME, createBotCore(createUsersRepo(env.DB)), env.TELEGRAM_API_BASE);
   return webhookCallback(bot, 'cloudflare-mod')(request);
 };
 
@@ -46,7 +47,7 @@ export default {
     return new Response('Not found', { status: 404 });
   },
 
-  async scheduled(_event: ScheduledController, _env: Env): Promise<void> {
-    // Sending reminders and refreshing data from Moodle: stage 4.
+  async scheduled(_event: ScheduledController, env: Env): Promise<void> {
+    await runScheduled(env);
   },
 } satisfies ExportedHandler<Env>;
