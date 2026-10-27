@@ -118,6 +118,13 @@ export const REMINDERS = {
   keyBytes: 32,
 } as const;
 
+/** Label of the theme button for each theme (UI text, Ukrainian). */
+export const THEME_LABEL = {
+  auto: 'Тема: як у системі',
+  light: 'Тема: світла',
+  dark: 'Тема: темна',
+} as const;
+
 /** First-visit hint that points at the reminders button (UI text, Ukrainian). */
 export const REMINDERS_HINT = {
   text: 'Нагадування в Telegram: бот напише за добу й за 3 години до дедлайну',

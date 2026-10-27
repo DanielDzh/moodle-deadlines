@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { DEFAULT_SITE, PRIVACY_LABEL, PRIVACY_URL } from '../config';
+import { DEFAULT_SITE, PRIVACY_LABEL, PRIVACY_URL, THEME_LABEL } from '../config';
 import { getToken } from '../lib/moodle';
 import { checkSite, hostOf, normSite } from '../lib/url';
 import type { LoginScreenProps } from '../types';
@@ -19,7 +19,7 @@ const offerToSavePassword = async (user: string, pass: string) => {
   }
 };
 
-export const LoginScreen = ({ site, remember: rememberInitial, message = '', onLoggedIn }: LoginScreenProps) => {
+export const LoginScreen = ({ site, remember: rememberInitial, message = '', theme, onNextTheme, onLoggedIn }: LoginScreenProps) => {
   const [error, setError] = useState(message);
   const [busy, setBusy] = useState(false);
   const [siteInput, setSiteInput] = useState(site);
@@ -59,7 +59,12 @@ export const LoginScreen = ({ site, remember: rememberInitial, message = '', onL
 
   return (
     <main className="login">
-      <h1 className="brand">Дедлайни</h1>
+      <div className="login-top">
+        <h1 className="brand">Дедлайни</h1>
+        <button type="button" className="btn ghost" onClick={onNextTheme}>
+          {THEME_LABEL[theme]}
+        </button>
+      </div>
       <p className="lead">Усі завдання з вашого Moodle на одній сторінці, від найтерміновішого до найдальшого.</p>
       <form className="panel" method="post" action="#" autoComplete="on" noValidate onSubmit={handleSubmit}>
         <p className="warn-note">
