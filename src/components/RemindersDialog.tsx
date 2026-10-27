@@ -68,13 +68,19 @@ export const RemindersDialog = ({ api, onClose }: Props) => {
 
       {state === 'pending' && (
         <>
-          <p>{T.pendingText}</p>
+          <ol className="pending-steps">
+            {T.pendingSteps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ol>
           <a className="btn primary open-bot" href={api.botUrl} target="_blank" rel="noopener noreferrer">
             {T.openBot}
           </a>
-          <p className="waiting">
-            <span className="spinner small" aria-hidden="true" /> {T.waiting}
+          <p className="waiting" role="status">
+            <span className="spinner small" aria-hidden="true" />
+            {T.waiting}
           </p>
+          <p className="pending-hint">{T.pendingHint}</p>
         </>
       )}
 
