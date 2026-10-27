@@ -29,7 +29,7 @@ Status: stages 1-4 done in code (stage 4 verified locally end to end; verify on 
 - Quiet hours 23:00–08:00 in the student's time zone: night reminders move to 08:00 if the deadline is later; if the deadline is before 08:00 the reminder goes out shortly before quiet hours start.
 - Discovered late (2 h left): only the closest reminder is sent.
 - Buttons: "Already done" (mutes reminders for that task), "Remind later".
-- Task data is deleted 7 days after the deadline. Users who have not visited the site for 60 days are deleted.
+- Task data is deleted 7 days after the deadline. Users who have not visited the site for 60 days are deleted; the bot warns them 7 days before (once per stretch of inactivity) and notifies them when it happens. Bot button presses do not count as a visit.
 
 ## Load on Moodle
 - Submission statuses cost one request per assignment. So server-side refresh: a full collection every few hours (start with 3), statuses only for tasks due within 7 days, users spread over time, one user per tick.

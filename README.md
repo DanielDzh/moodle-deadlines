@@ -83,7 +83,8 @@ A student can link the site to a Telegram bot ([`worker/`](worker/), a Cloudflar
 - The Moodle address is validated before every fetch (https only, public domain names, no redirects, size and time
   limits). An expired token pauses the user and notifies them once.
 - Everything is deletable: the button on the site, `/stop` in the bot, logging out, and automatic cleanup (tasks 7 days
-  after a deadline, abandoned link attempts after 10 minutes, users who have not visited for 60 days).
+  after a deadline, abandoned link attempts after 10 minutes, and users who have not visited the site for 60 days, who are
+  warned in the bot 7 days before and told when it happens).
 
 Design notes and stages: [`docs/plans/telegram-reminders.md`](docs/plans/telegram-reminders.md). Deployment:
 [`docs/deployment.md`](docs/deployment.md).

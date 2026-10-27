@@ -15,6 +15,8 @@ export interface Env {
   BLOCKED_SITES?: string;
   /** "1" skips the Moodle address check so a local mock Moodle works. Set only in .dev.vars, never in production. */
   DEV_ALLOW_ANY_SITE?: string;
+  /** The site's address, used in bot messages. */
+  SITE_URL: string;
   /** Overrides https://api.telegram.org, so local runs can talk to a stand-in server. */
   TELEGRAM_API_BASE?: string;
 }

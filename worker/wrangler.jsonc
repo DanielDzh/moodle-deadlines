@@ -6,7 +6,8 @@
   "vars": {
     // Origins allowed to call /api/* from a browser (the site). Local development adds localhost via .dev.vars.
     "ALLOWED_ORIGINS": "https://moodle-dedlainy.tinyapp.workers.dev",
-    "BOT_USERNAME": "moodle_deadlines_bot"
+    "BOT_USERNAME": "moodle_deadlines_bot",
+    "SITE_URL": "https://moodle-dedlainy.tinyapp.workers.dev"
   },
   "d1_databases": [
     {
