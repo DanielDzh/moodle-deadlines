@@ -126,6 +126,12 @@ export interface ApiRepo {
   deletePendingBySyncKey: (hash: string) => Promise<void>;
 }
 
+/** Where abuse counters are kept. */
+export interface RateLimitRepo {
+  /** Adds one to the counter and returns the new value. */
+  hit: (bucket: string, window: number) => Promise<number>;
+}
+
 /** Events the server counts itself. */
 export type ServerEvent = 'reminders_linked' | 'reminders_unlinked' | 'reminder_sent';
 

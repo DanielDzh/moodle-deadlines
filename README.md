@@ -74,6 +74,8 @@ store their token (see below).
   Worker (`/api/hit`): a day, an hour, a hash of a random browser id and the event name. No IP, no user agent, no third-party
   scripts, no cookies; Do Not Track / Global Privacy Control and a switch on the privacy page turn it off. Kept 13 months.
   The owner reads it on a key-protected page (`/stats` on the Worker).
+- **Abuse limits** inside the Worker: 60 link attempts and 1200 statistics events per client address per hour. The counter is
+  keyed by a secret-keyed hash that changes every hour (the address is never stored) and rows are deleted after two hours.
 - **Strict headers** via `public/_headers`: a tight Content-Security-Policy, no framing, no referrer.
 
 The plain-language privacy notice shown to students is [`public/privacy.html`](public/privacy.html).

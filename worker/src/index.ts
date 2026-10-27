@@ -1,5 +1,7 @@
 import { webhookCallback } from 'grammy';
 import { handleApi } from './api/handlers';
+import { createRateLimitRepo } from './db/rate-limit-repo';
+import { enforceLimit } from './lib/rate-limit';
 import { createAnalyticsRepo, createStatsRepo, createTracker } from './analytics/analytics-repo';
 import { handleHit } from './analytics/hit';
 import { buildStats } from './analytics/stats';
@@ -13,6 +15,7 @@ import { devSiteCheck } from './lib/dev-site-check';
 import { secretsMatch } from './lib/secure-compare';
 import { parseBlockedSites } from './lib/site-url';
 import { runScheduled } from './services/scheduled';
+import { RATE_LIMITS } from './config';
 import type { Env } from './types';
 
 const WEBHOOK_SECRET_HEADER = 'X-Telegram-Bot-Api-Secret-Token';
@@ -38,17 +41,33 @@ const withCors = async (request: Request, env: Env, handler: () => Promise<Respo
   return response;
 };
 
+/** The 429 answer, with the time to wait. */
+const tooMany = (retryAfter: number, body: string | null): Response =>
+  body === null
+    ? new Response(null, { status: 204 })
+    : new Response(body, { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(retryAfter) } });
+
+/** Counts a request against its route's limit; a Response means "stop here". */
+const limit = async (request: Request, env: Env, route: string, max: number, silent = false): Promise<Response | null> => {
+  const over = await enforceLimit(createRateLimitRepo(env.DB), request, { secret: env.TOKEN_KEY, route, limit: max, now: Math.floor(Date.now() / 1000) });
+  return over ? tooMany(over.retryAfter, silent ? null : JSON.stringify({ error: 'rate_limited' })) : null;
+};
+
 const handleSiteApi = (request: Request, env: Env): Promise<Response> =>
-  withCors(request, env, () =>
-    handleApi(request, {
+  withCors(request, env, async () => {
+    if (request.method === 'POST' && new URL(request.url).pathname === '/api/link/start') {
+      const blocked = await limit(request, env, 'link-start', RATE_LIMITS.linkStart);
+      if (blocked) return blocked;
+    }
+    return handleApi(request, {
       repo: createApiRepo(env.DB),
       tokenKey: env.TOKEN_KEY,
       botUsername: env.BOT_USERNAME,
       blockedSites: parseBlockedSites(env.BLOCKED_SITES),
       siteCheck: env.DEV_ALLOW_ANY_SITE === '1' ? devSiteCheck : undefined,
       track: createTracker(createAnalyticsRepo(env.DB)),
-    }),
-  );
+    });
+  });
 
 const handleStatsApi = async (request: Request, env: Env): Promise<Response> => {
   const key = parseBearerAny(request);
@@ -77,7 +96,13 @@ export default {
     if (pathname === '/telegram' && request.method === 'POST') return handleTelegram(request, env);
     if (pathname === '/stats' && request.method === 'GET') return new Response(STATS_PAGE, { headers: STATS_PAGE_HEADERS });
     if (pathname === '/api/stats' && request.method === 'GET') return handleStatsApi(request, env);
-    if (pathname === '/api/hit') return withCors(request, env, () => handleHit(request, { repo: createAnalyticsRepo(env.DB) }));
+    if (pathname === '/api/hit') {
+      return withCors(request, env, async () => {
+        // Over the limit: answer 204 like a counted hit, so the page never sees an error because of statistics.
+        const blocked = request.method === 'POST' ? await limit(request, env, 'hit', RATE_LIMITS.hit, true) : null;
+        return blocked ?? handleHit(request, { repo: createAnalyticsRepo(env.DB) });
+      });
+    }
     if (pathname.startsWith('/api/')) return handleSiteApi(request, env);
     return new Response('Not found', { status: 404 });
   },

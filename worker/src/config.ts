@@ -50,6 +50,20 @@ export const PATTERNS = {
 /** Latest sensible deadline (year 2100), seconds. */
 export const MAX_DUE = 4_102_444_800;
 
+/**
+ * Abuse limits per client address and hour. Deliberately generous: a whole university can share one address
+ * (campus Wi-Fi), so these only stop bulk automation, not a class linking Telegram at the start of a lesson.
+ */
+export const RATE_LIMITS = {
+  windowSec: 3600,
+  /** Starting a Telegram link (each attempt stores an encrypted token for 10 minutes). */
+  linkStart: 60,
+  /** Anonymous statistics events (about 4 per visit). */
+  hit: 1200,
+  /** Rows older than this many windows are deleted. */
+  keepWindows: 2,
+} as const;
+
 /** Anonymous first-party usage statistics. */
 export const ANALYTICS = {
   /** Days and hours are counted in this time zone (the audience is in Ukraine). */
