@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { KEYS, REMINDERS, REMINDER_TEXTS } from '../config';
-import { fetchLinkState, hasSyncKey, linkStart, pushItems, RemindersError, unlink } from '../lib/reminders-api';
-import { buildReminderItems } from '../lib/reminders-sync';
+import { fetchLinkStatus, hasSyncKey, linkStart, pushItems, RemindersError, unlink } from '../lib/reminders-api';
+import { buildReminderItems, sameKeys } from '../lib/reminders-sync';
 import { local } from '../lib/storage';
-import type { ReminderState, RemindersApi, Snapshot } from '../types';
+import type { LinkStatus, ReminderState, RemindersApi, Snapshot } from '../types';
 
 const errorText = (error: unknown): string => {
   const code = error instanceof RemindersError ? error.code : 'network';
@@ -14,6 +14,7 @@ const errorText = (error: unknown): string => {
 /** Telegram reminders: link state, linking, unlinking and pushing tasks to the service. */
 export const useReminders = ({ site, token }: { site: string; token: string }): RemindersApi => {
   const [state, setState] = useState<ReminderState>('unknown');
+  const [remoteDone, setRemoteDone] = useState<readonly string[]>([]);
   const [botUrl, setBotUrl] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -21,6 +22,16 @@ export const useReminders = ({ site, token }: { site: string; token: string }): 
   const debounce = useRef<number | undefined>(undefined);
   const stateRef = useRef(state);
   stateRef.current = state;
+  /** Set once the server's list of done tasks has been read, so a stale local list never overwrites the bot's presses. */
+  const pulled = useRef(false);
+
+  const applyStatus = useCallback((status: LinkStatus) => {
+    if (status.state === 'active') {
+      setRemoteDone((previous) => (sameKeys(previous, status.done) ? previous : status.done));
+      pulled.current = true;
+    }
+    setState(status.state);
+  }, []);
 
   // On start: ask the service, but only if this browser has ever linked (otherwise there is nothing to ask).
   useEffect(() => {
@@ -29,8 +40,18 @@ export const useReminders = ({ site, token }: { site: string; token: string }): 
       setState('none');
       return;
     }
-    fetchLinkState().then(setState, () => setState('unavailable'));
-  }, [token]);
+    fetchLinkStatus().then(applyStatus, () => setState('unavailable'));
+  }, [token, applyStatus]);
+
+  // Back on the tab after pressing a button in Telegram: read the server's list again.
+  useEffect(() => {
+    if (state !== 'active') return;
+    const refresh = () => {
+      if (document.visibilityState === 'visible') fetchLinkStatus().then(applyStatus, () => undefined);
+    };
+    document.addEventListener('visibilitychange', refresh);
+    return () => document.removeEventListener('visibilitychange', refresh);
+  }, [state, applyStatus]);
 
   // While a link is pending, wait for the student to press Start in the bot.
   useEffect(() => {
@@ -41,14 +62,14 @@ export const useReminders = ({ site, token }: { site: string; token: string }): 
         return;
       }
       try {
-        const next = await fetchLinkState();
-        if (next !== 'pending') setState(next);
+        const next = await fetchLinkStatus();
+        if (next.state !== 'pending') applyStatus(next);
       } catch {
         /* a temporary network problem: try again on the next tick */
       }
     }, REMINDERS.pollMs);
     return () => window.clearInterval(id);
-  }, [state]);
+  }, [state, applyStatus]);
 
   const start = useCallback(async () => {
     setBusy(true);
@@ -86,18 +107,18 @@ export const useReminders = ({ site, token }: { site: string; token: string }): 
   }, []);
 
   const syncSoon = useCallback((snapshot: Snapshot, done: Record<string, boolean>) => {
-    if (stateRef.current !== 'active') return;
+    if (stateRef.current !== 'active' || !pulled.current) return;
     window.clearTimeout(debounce.current);
     debounce.current = window.setTimeout(() => {
       // Read the done ticks at send time (localStorage is the source of truth) so a late tick is not lost.
       const latest = local.get<Record<string, boolean>>(KEYS.done, done);
       pushItems(buildReminderItems(snapshot, latest, Math.floor(Date.now() / 1000))).catch((e) => {
-        if (e instanceof RemindersError && e.code === 'not_active') fetchLinkState().then(setState, () => undefined);
+        if (e instanceof RemindersError && e.code === 'not_active') fetchLinkStatus().then(applyStatus, () => undefined);
       });
     }, REMINDERS.syncDebounceMs);
-  }, []);
+  }, [applyStatus]);
 
   const clearError = useCallback(() => setError(''), []);
 
-  return { state, botUrl, error, busy, start, disable, syncSoon, clearError };
+  return { state, remoteDone, botUrl, error, busy, start, disable, syncSoon, clearError };
 };

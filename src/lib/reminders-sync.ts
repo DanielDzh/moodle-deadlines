@@ -19,3 +19,16 @@ export const buildReminderItems = (snapshot: Snapshot, done: Record<string, bool
       submitted: isSubmitted(t),
     }));
 };
+
+/** The same set of keys, in any order. */
+export const sameKeys = (a: readonly string[], b: readonly string[]): boolean => a.length === b.length && a.every((key) => b.includes(key));
+
+/**
+ * Adds the tasks that were marked done on the server (the bot's "Already done") to the site's own ticks.
+ * Ticks are only added here; unticking on the site reaches the server through the next sync, which comes before the next pull.
+ * Returns the same object when nothing changes, so React does not re-render for nothing.
+ */
+export const mergeRemoteDone = (done: Record<string, boolean>, remote: readonly string[]): Record<string, boolean> => {
+  const missing = remote.filter((key) => !done[key]);
+  return missing.length ? { ...done, ...Object.fromEntries(missing.map((key) => [key, true])) } : done;
+};

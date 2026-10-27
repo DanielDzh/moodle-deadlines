@@ -1,3 +1,4 @@
+import { LIMITS } from '../config';
 import type { ApiRepo, SyncTask } from '../types';
 
 /** D1 chunk size: D1 limits the number of bound parameters per statement. */
@@ -65,6 +66,11 @@ export const createApiRepo = (db: D1Database): ApiRepo => ({
     ];
     await db.batch(statements);
     return tasks.length;
+  },
+
+  doneKeys: async (userId) => {
+    const rows = await db.prepare('SELECT key FROM tasks WHERE user_id = ?1 AND done = 1 LIMIT ?2').bind(userId, LIMITS.maxTasks).all<{ key: string }>();
+    return rows.results.map((r) => r.key);
   },
 
   deleteUsersBySyncKey: async (hash) => {

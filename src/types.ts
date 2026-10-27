@@ -84,6 +84,13 @@ export interface LoginScreenProps {
 /** Link state of the Telegram reminders as the site sees it. */
 export type ReminderState = 'unknown' | 'none' | 'pending' | 'active' | 'paused' | 'unavailable';
 
+/** What the reminders service reports about this browser's link. */
+export interface LinkStatus {
+  state: ReminderState;
+  /** Keys of tasks that are done on the server (including the bot's "Already done" presses). */
+  done: string[];
+}
+
 /** One task as it is pushed to the reminders service. */
 export interface ReminderItem {
   key: string;
@@ -98,6 +105,8 @@ export interface ReminderItem {
 /** Everything the UI needs from the reminders feature. */
 export interface RemindersApi {
   state: ReminderState;
+  /** Task keys marked done in the bot; the board merges them into its own ticks. */
+  remoteDone: readonly string[];
   /** t.me link with the one-time code while a link is pending. */
   botUrl: string;
   /** User-facing error text, empty when there is none. */

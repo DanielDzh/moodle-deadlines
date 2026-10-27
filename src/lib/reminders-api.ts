@@ -1,5 +1,5 @@
 import { KEYS, REMINDERS, REMINDERS_API_URL } from '../config';
-import type { ReminderItem, ReminderState } from '../types';
+import type { LinkStatus, ReminderItem } from '../types';
 import { local } from './storage';
 
 /** An error from the reminders service; code is a stable identifier (see REMINDER_TEXTS.errors). */
@@ -68,9 +68,9 @@ export const linkStart = (site: string, token: string): Promise<LinkStartResult>
     body: { site, token, tz: Intl.DateTimeFormat().resolvedOptions().timeZone, syncKey: ensureSyncKey() },
   });
 
-export const fetchLinkState = async (): Promise<ReminderState> => {
-  const { state } = await request<{ state: ReminderState }>('/api/link/status', { method: 'GET', key: ensureSyncKey() });
-  return state;
+export const fetchLinkStatus = async (): Promise<LinkStatus> => {
+  const status = await request<Partial<LinkStatus> & Pick<LinkStatus, 'state'>>('/api/link/status', { method: 'GET', key: ensureSyncKey() });
+  return { state: status.state, done: Array.isArray(status.done) ? status.done : [] };
 };
 
 export const pushItems = (items: ReminderItem[]): Promise<{ ok: boolean; tracked: number }> =>

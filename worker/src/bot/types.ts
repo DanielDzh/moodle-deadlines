@@ -6,8 +6,8 @@ export interface BotRepo {
   deleteByChat: (chatId: number) => Promise<boolean>;
   /** How many upcoming unfinished tasks are tracked for the chat; null if the chat is not linked. */
   trackedTasks: (chatId: number, now: number) => Promise<number | null>;
-  /** "Already done": no more reminders for the task. False if the chat or the task is unknown. */
-  muteTask: (chatId: number, taskKey: string) => Promise<boolean>;
+  /** "Already done": sets the same flag as the tick on the site. False if the chat or the task is unknown. */
+  markDone: (chatId: number, taskKey: string) => Promise<boolean>;
   /** "Remind later": skip the task until `until` and let its last reminder go out again afterwards. */
   snoozeTask: (chatId: number, taskKey: string, until: number) => Promise<boolean>;
 }
