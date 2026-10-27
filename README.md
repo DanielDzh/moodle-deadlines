@@ -69,6 +69,10 @@ store their token (see below).
 - **HTTPS only** for the Moodle address, so credentials never travel in plain text.
 - **Untrusted content stays inert.** Descriptions from Moodle are converted to plain text (scripts are dropped)
   and links are allowed only if they are `http(s)`.
+- **Anonymous first-party statistics.** The site counts visits, logins, opening the reminders dialog and donate clicks through the
+  Worker (`/api/hit`): a day, an hour, a hash of a random browser id and the event name. No IP, no user agent, no third-party
+  scripts, no cookies; Do Not Track / Global Privacy Control and a switch on the privacy page turn it off. Kept 13 months.
+  The owner reads it on a key-protected page (`/stats` on the Worker).
 - **Strict headers** via `public/_headers`: a tight Content-Security-Policy, no framing, no referrer.
 
 The plain-language privacy notice shown to students is [`public/privacy.html`](public/privacy.html).

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { BURN_DAYS, KEYS, REMINDER_TEXTS } from '../config';
 import { useStoredState } from '../hooks/useStoredState';
 import { useMinute } from '../hooks/useMinute';
+import { track } from '../lib/analytics';
 import { buildBoard } from '../lib/board';
 import { fmtDateTime, fmtDayLong } from '../lib/dates';
 import type { Course, RemindersApi, Snapshot, Theme } from '../types';
@@ -47,7 +48,10 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, remin
   const [filter, setFilter] = useStoredState<number[]>(KEYS.filter, []);
   const burnDays = useMemo(burnDaysFromUrl, []);
   const [remindersOpen, setRemindersOpen] = useState(false);
-  const openReminders = () => setRemindersOpen(true);
+  const openReminders = () => {
+    track('reminders_open');
+    setRemindersOpen(true);
+  };
   const closeReminders = () => setRemindersOpen(false);
 
   // Push the tasks to the reminders service after every refresh and every tick change (debounced inside the hook).

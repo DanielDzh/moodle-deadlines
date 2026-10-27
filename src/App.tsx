@@ -6,6 +6,7 @@ import { LogoutDialog } from './components/LogoutDialog';
 import { ErrorScreen, LoadingScreen } from './components/StatusScreens';
 import { useReminders } from './hooks/useReminders';
 import { useStoredState } from './hooks/useStoredState';
+import { track } from './lib/analytics';
 import { collectSnapshot, isAuthError, sanitizeSnapshot } from './lib/moodle';
 import { local, readSecret, saveSecret, wipeSecrets } from './lib/storage';
 import { normSite } from './lib/url';
@@ -103,7 +104,13 @@ export function App() {
     void refresh();
   }, [refresh]);
 
+  // One count per page load, on the login screen too, so visitors who never sign in still show up.
+  useEffect(() => {
+    track('visit');
+  }, []);
+
   const onLoggedIn = useCallback((s: { site: string; token: string; remember: boolean }) => {
+    track('login');
     local.set(KEYS.site, s.site);
     local.set(KEYS.remember, s.remember);
     saveSecret(KEYS.token, s.token, s.remember);

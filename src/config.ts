@@ -55,6 +55,10 @@ export const KEYS = {
   filter: 'md.filter',
   theme: 'md.theme',
   syncKey: 'md.syncKey',
+  /** Random anonymous browser id for statistics. Not linked to any account. */
+  visitorId: 'md.vid',
+  /** "Do not count me": set on the privacy page. */
+  noStats: 'md.noStats',
 } as const;
 
 /**
@@ -96,6 +100,10 @@ export const PRIVACY_LABEL = 'Політика приватності';
 /** Overridable with VITE_REMINDERS_API_URL for local development against `wrangler dev`. */
 export const REMINDERS_API_URL: string =
   import.meta.env.VITE_REMINDERS_API_URL || 'https://moodle-deadlines-bot.tinyapp.workers.dev';
+
+/** Anonymous usage statistics (the Worker counts days, hours and events; no IP, no accounts). */
+export const ANALYTICS_URL = `${REMINDERS_API_URL}/api/hit`;
+export type AnalyticsEvent = 'visit' | 'login' | 'reminders_open' | 'donate_click';
 
 export const REMINDERS = {
   /** How often to ask whether the student pressed Start in the bot, ms. */

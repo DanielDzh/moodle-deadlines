@@ -24,6 +24,16 @@ Migrations run automatically, so a migration must be safe to run against the liv
    - `CLOUDFLARE_ACCOUNT_ID`: your Cloudflare account id (shown by `npx wrangler whoami`)
 3. Never paste the token into a chat or commit it. The Worker's own secrets (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`, `TOKEN_KEY`) stay in Cloudflare and are set once with `worker/scripts/setup-secrets.sh`.
 
+## Statistics page
+
+The owner's statistics live on the bot Worker at `/stats` (for example `https://moodle-deadlines-bot.<subdomain>.workers.dev/stats`). Choose a long random passphrase and store it once:
+
+```bash
+cd worker && npx wrangler secret put STATS_KEY
+```
+
+The page asks for that key (kept only for the browser session). Without the secret the page stays locked. The data is anonymous counters in the `analytics_events` table (day, hour, hash of a random browser id, event); statistics older than 13 months are deleted automatically.
+
 If the two secrets are missing, the deploy job fails at its first step with a clear message and nothing is published.
 
 ## Manual deploy

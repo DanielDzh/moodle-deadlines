@@ -41,6 +41,9 @@ Status: stages 1-4 done in code (stage 4 verified locally end to end; verify on 
 - The site CSP already allows `connect-src https:`, so the Worker address needs no change in `_headers`.
 - The repository root already has a Worker for the site (`moodle-dedlainy`). The reminders Worker is separate, with its own `worker/wrangler.jsonc`.
 
+## Statistics
+Anonymous usage statistics live in the same Worker (`analytics_events`, migration 0004; `/api/hit`, key-protected `/stats`). See the README for what is and is not stored.
+
 ## Stages with verification
 1. Skeleton, D1 schema, token encryption, a pure "what to send now" function + tests. **Done.**
 2. Bot: webhook, `/start`, `/stop`, `/status`, `/help`. **Done** and deployed.

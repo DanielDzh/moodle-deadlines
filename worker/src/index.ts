@@ -1,13 +1,17 @@
 import { webhookCallback } from 'grammy';
-import { createBot } from './bot/create-bot';
-import { createBotCore } from './bot/bot-core';
-import { createUsersRepo } from './db/users-repo';
 import { handleApi } from './api/handlers';
+import { createAnalyticsRepo, createStatsRepo, createTracker } from './analytics/analytics-repo';
+import { handleHit } from './analytics/hit';
+import { buildStats } from './analytics/stats';
+import { STATS_PAGE } from './analytics/stats-page';
+import { createBotCore } from './bot/bot-core';
+import { createBot } from './bot/create-bot';
 import { createApiRepo } from './db/api-repo';
+import { createUsersRepo } from './db/users-repo';
 import { corsHeadersFor, parseOrigins } from './lib/cors';
 import { devSiteCheck } from './lib/dev-site-check';
-import { parseBlockedSites } from './lib/site-url';
 import { secretsMatch } from './lib/secure-compare';
+import { parseBlockedSites } from './lib/site-url';
 import { runScheduled } from './services/scheduled';
 import type { Env } from './types';
 
@@ -19,24 +23,51 @@ const handleTelegram = async (request: Request, env: Env): Promise<Response> => 
   if (!provided || !(await secretsMatch(provided, env.TELEGRAM_WEBHOOK_SECRET))) {
     return new Response('Unauthorized', { status: 401 });
   }
-  const bot = createBot(env.TELEGRAM_BOT_TOKEN, env.BOT_USERNAME, createBotCore(createUsersRepo(env.DB)), env.TELEGRAM_API_BASE);
+  const track = createTracker(createAnalyticsRepo(env.DB));
+  const bot = createBot(env.TELEGRAM_BOT_TOKEN, env.BOT_USERNAME, createBotCore(createUsersRepo(env.DB), undefined, track), env.TELEGRAM_API_BASE);
   return webhookCallback(bot, 'cloudflare-mod')(request);
 };
 
-/** The site API with CORS: only the configured site origins may call it from a browser. */
-const handleSiteApi = async (request: Request, env: Env): Promise<Response> => {
+/** Runs a browser-facing handler with CORS: only the configured site origins may call it. */
+const withCors = async (request: Request, env: Env, handler: () => Promise<Response>): Promise<Response> => {
   const cors = corsHeadersFor(request, parseOrigins(env.ALLOWED_ORIGINS));
   if (request.method === 'OPTIONS') return new Response(null, { status: cors ? 204 : 403, headers: cors ?? {} });
   if (request.headers.has('Origin') && !cors) return new Response('Forbidden', { status: 403 });
-  const response = await handleApi(request, {
-    repo: createApiRepo(env.DB),
-    tokenKey: env.TOKEN_KEY,
-    botUsername: env.BOT_USERNAME,
-    blockedSites: parseBlockedSites(env.BLOCKED_SITES),
-    siteCheck: env.DEV_ALLOW_ANY_SITE === '1' ? devSiteCheck : undefined,
-  });
+  const response = await handler();
   for (const [name, value] of Object.entries(cors ?? {})) response.headers.set(name, value);
   return response;
+};
+
+const handleSiteApi = (request: Request, env: Env): Promise<Response> =>
+  withCors(request, env, () =>
+    handleApi(request, {
+      repo: createApiRepo(env.DB),
+      tokenKey: env.TOKEN_KEY,
+      botUsername: env.BOT_USERNAME,
+      blockedSites: parseBlockedSites(env.BLOCKED_SITES),
+      siteCheck: env.DEV_ALLOW_ANY_SITE === '1' ? devSiteCheck : undefined,
+      track: createTracker(createAnalyticsRepo(env.DB)),
+    }),
+  );
+
+const handleStatsApi = async (request: Request, env: Env): Promise<Response> => {
+  const key = parseBearerAny(request);
+  if (!env.STATS_KEY || !key || !(await secretsMatch(key, env.STATS_KEY))) return new Response('Unauthorized', { status: 401 });
+  const stats = await buildStats(createStatsRepo(env.DB), Math.floor(Date.now() / 1000));
+  return new Response(JSON.stringify(stats), { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
+};
+
+/** The statistics key from `Authorization: Bearer <key>` (any non-empty token, unlike the site's sync key). */
+const parseBearerAny = (request: Request): string | null => /^Bearer (\S{1,200})$/.exec(request.headers.get('Authorization') ?? '')?.[1] ?? null;
+
+const STATS_PAGE_HEADERS = {
+  'Content-Type': 'text/html; charset=utf-8',
+  'Cache-Control': 'no-store',
+  // The page is one self-contained document with inline script and style, and only talks to itself.
+  'Content-Security-Policy': "default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+  'X-Frame-Options': 'DENY',
+  'Referrer-Policy': 'no-referrer',
+  'X-Robots-Tag': 'noindex',
 };
 
 export default {
@@ -44,6 +75,9 @@ export default {
     const { pathname } = new URL(request.url);
     if (pathname === '/health') return new Response('ok');
     if (pathname === '/telegram' && request.method === 'POST') return handleTelegram(request, env);
+    if (pathname === '/stats' && request.method === 'GET') return new Response(STATS_PAGE, { headers: STATS_PAGE_HEADERS });
+    if (pathname === '/api/stats' && request.method === 'GET') return handleStatsApi(request, env);
+    if (pathname === '/api/hit') return withCors(request, env, () => handleHit(request, { repo: createAnalyticsRepo(env.DB) }));
     if (pathname.startsWith('/api/')) return handleSiteApi(request, env);
     return new Response('Not found', { status: 404 });
   },

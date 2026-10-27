@@ -1,3 +1,4 @@
+import { createAnalyticsRepo, createTracker } from '../analytics/analytics-repo';
 import { cleanup } from '../db/cleanup-repo';
 import { createDeliveryRepo } from '../db/delivery-repo';
 import { createInactivityRepo } from '../db/inactivity-repo';
@@ -22,6 +23,7 @@ export const runScheduled = async (env: Env, now: number = Math.floor(Date.now()
   const steps: [string, () => Promise<unknown>][] = [
     ['deliver', async () => {
       const report = await deliverReminders(createDeliveryRepo(env.DB), telegram, now);
+      await createTracker(createAnalyticsRepo(env.DB), () => now)('reminder_sent', report.sent);
       if (report.sent || report.removed || report.failed || report.rateLimited) console.log('delivery', JSON.stringify(report));
     }],
     ['refresh', async () => {
