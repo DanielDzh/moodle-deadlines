@@ -159,6 +159,20 @@ describe('site API', () => {
     expect(users.size).toBe(1);
   });
 
+  it('counts an unlink for statistics only when there was something to remove', async () => {
+    const events: string[] = [];
+    const store = memory();
+    const call = (method: string, path: string, body?: unknown) =>
+      handleApi(new Request(`https://w.example${path}`, { method, headers: { Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }), {
+        repo: store.repo, tokenKey: generateTokenKey(), botUsername: 'b', blockedSites: [], now: () => NOW, track: async (event) => void events.push(event),
+      });
+    await call('POST', '/api/unlink', {});
+    expect(events).toEqual([]);
+    await call('POST', '/api/link/start', start);
+    await call('POST', '/api/unlink', {});
+    expect(events).toEqual(['reminders_unlinked']);
+  });
+
   it('unknown routes are 404 and errors never leak details', async () => {
     const { call } = setup();
     expect((await call('GET', '/api/nope')).status).toBe(404);

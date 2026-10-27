@@ -15,6 +15,8 @@ export interface Env {
   BLOCKED_SITES?: string;
   /** "1" skips the Moodle address check so a local mock Moodle works. Set only in .dev.vars, never in production. */
   DEV_ALLOW_ANY_SITE?: string;
+  /** Secret for the owner's statistics page. */
+  STATS_KEY?: string;
   /** The site's address, used in bot messages. */
   SITE_URL: string;
   /** Overrides https://api.telegram.org, so local runs can talk to a stand-in server. */
@@ -120,4 +122,25 @@ export interface ApiRepo {
   deleteUsersBySyncKey: (hash: string) => Promise<void>;
   /** Removes only the unfinished link attempts of this browser key. */
   deletePendingBySyncKey: (hash: string) => Promise<void>;
+}
+
+/** Events the server counts itself. */
+export type ServerEvent = 'reminders_linked' | 'reminders_unlinked' | 'reminder_sent';
+
+/** Records a server-side event. Never throws: statistics must not break the feature they measure. */
+export type Tracker = (event: ServerEvent, n?: number) => Promise<void>;
+
+/** Where anonymous statistics are written. */
+export interface AnalyticsRepo {
+  record: (event: string, visitor: string, n: number, day: string, hour: number) => Promise<void>;
+}
+
+/** The read side used by the owner's statistics page. */
+export interface StatsRepo {
+  uniqueVisitorsSince: (day: string) => Promise<number>;
+  perDay: (since: string) => Promise<{ day: string; visitors: number; visits: number; logins: number }[]>;
+  visitsByHour: (since: string) => Promise<{ hour: number; visits: number }[]>;
+  eventTotals: (since: string) => Promise<{ event: string; total: number; people: number }[]>;
+  newAndReturning: (since: string) => Promise<{ newVisitors: number; returning: number }>;
+  activeDaysHistogram: (since: string) => Promise<{ days: number; visitors: number }[]>;
 }

@@ -87,6 +87,18 @@ describe('bot behaviour', () => {
     expect(await core.taskAction(5, 'snooze', 'nope')).toBe(TEXTS.taskGone);
   });
 
+  it('counts linking and unlinking for statistics, but not failed attempts', async () => {
+    const events: string[] = [];
+    const { repo } = memoryRepo({ GOODCODE12: NOW + 600 });
+    const core = createBotCore(repo, () => NOW, async (event) => void events.push(event));
+    await core.start(5, 'NOSUCHCODE');
+    await core.stop(5);
+    expect(events).toEqual([]);
+    await core.start(5, 'GOODCODE12');
+    await core.stop(5);
+    expect(events).toEqual(['reminders_linked', 'reminders_unlinked']);
+  });
+
   it('/help lists the commands', () => {
     const core = createBotCore(memoryRepo().repo);
     expect(core.help()).toContain('/stop');

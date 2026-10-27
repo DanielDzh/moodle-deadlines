@@ -3,7 +3,7 @@ import { generateLinkCode, generateUserId } from '../lib/link-code';
 import { parseBearer, parseLinkStart, parseSync } from '../lib/request-parsing';
 import { checkMoodleSite } from '../lib/site-url';
 import { encryptToken, sha256Hex } from '../lib/token-crypto';
-import type { ApiRepo, LinkState, SiteCheck } from '../types';
+import type { ApiRepo, LinkState, SiteCheck, Tracker } from '../types';
 
 export interface ApiDeps {
   repo: ApiRepo;
@@ -13,6 +13,8 @@ export interface ApiDeps {
   blockedSites: readonly string[];
   /** Replaces the Moodle address check. For local development only (see DEV_ALLOW_ANY_SITE); never set in production. */
   siteCheck?: (input: unknown) => SiteCheck;
+  /** Counts anonymous statistics events. */
+  track?: Tracker;
   now?: () => number;
 }
 
@@ -57,6 +59,7 @@ export const handleApi = async (request: Request, deps: ApiDeps): Promise<Respon
 
       if (route === 'POST /api/unlink') {
         await deps.repo.deleteUsersBySyncKey(keyHash);
+        if (user) await deps.track?.('reminders_unlinked');
         return json({ ok: true });
       }
 

@@ -50,6 +50,21 @@ export const PATTERNS = {
 /** Latest sensible deadline (year 2100), seconds. */
 export const MAX_DUE = 4_102_444_800;
 
+/** Anonymous first-party usage statistics. */
+export const ANALYTICS = {
+  /** Days and hours are counted in this time zone (the audience is in Ukraine). */
+  timeZone: 'Europe/Kyiv',
+  /** Events the site may report. Anything else is ignored. */
+  clientEvents: ['visit', 'login', 'reminders_open', 'donate_click'],
+  /** Events the server counts itself. */
+  serverEvents: ['reminders_linked', 'reminders_unlinked', 'reminder_sent'],
+  /** Keep this many days of statistics (about 13 months). */
+  retentionDays: 400,
+  /** Requests from obvious crawlers and link-preview fetchers are not counted. */
+  botPattern: /bot|crawl|spider|slurp|headless|preview|facebookexternalhit|curl|wget|python-requests|httpclient/i,
+  serverVisitor: 'server',
+} as const;
+
 /** Reminder delivery. */
 export const DELIVERY = {
   /** Only tasks due within this many seconds are considered each minute (24 h plus room for night shifting). */

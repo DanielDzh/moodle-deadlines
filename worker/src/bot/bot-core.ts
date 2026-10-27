@@ -1,4 +1,5 @@
 import { DELIVERY } from '../config';
+import type { Tracker } from '../types';
 import { TEXTS } from './texts';
 import type { BotCore, BotRepo } from './types';
 
@@ -6,15 +7,25 @@ import type { BotCore, BotRepo } from './types';
 const CODE_PATTERN = /^[A-Za-z0-9_-]{8,64}$/;
 
 /** The bot's behaviour without any Telegram or D1 specifics, so it can be tested directly. */
-export const createBotCore = (repo: BotRepo, clock: () => number = () => Math.floor(Date.now() / 1000)): BotCore => ({
+export const createBotCore = (
+  repo: BotRepo,
+  clock: () => number = () => Math.floor(Date.now() / 1000),
+  track: Tracker = async () => {},
+): BotCore => ({
   start: async (chatId, payload) => {
     const code = payload.trim();
     if (!code) return TEXTS.startNoCode;
     if (!CODE_PATTERN.test(code)) return TEXTS.invalidCode;
-    return (await repo.bindChat(code, chatId, clock())) ? TEXTS.linked : TEXTS.invalidCode;
+    if (!(await repo.bindChat(code, chatId, clock()))) return TEXTS.invalidCode;
+    await track('reminders_linked');
+    return TEXTS.linked;
   },
 
-  stop: async (chatId) => ((await repo.deleteByChat(chatId)) ? TEXTS.stopped : TEXTS.stopNothing),
+  stop: async (chatId) => {
+    if (!(await repo.deleteByChat(chatId))) return TEXTS.stopNothing;
+    await track('reminders_unlinked');
+    return TEXTS.stopped;
+  },
 
   status: async (chatId) => {
     const count = await repo.trackedTasks(chatId, clock());
