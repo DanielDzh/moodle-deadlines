@@ -15,7 +15,7 @@ Status: stages 1-4 done in code (stage 4 verified locally end to end; verify on 
 4. Explicit consent on screen: what is stored (token, task names and deadlines, Telegram chat, time zone), why, and how to turn it off.
 5. `/stop` in the bot and a button on the site delete the token and everything else immediately. Hint on how to reset the token inside Moodle (verify the exact names in the Moodle UI).
 6. An invalid or expired token pauses reminders, the bot asks to log in on the site again, and the token is deleted.
-7. The Telegram webhook verifies a secret header. Site endpoints: CORS only for the site origin, size and rate limits.
+7. The Telegram webhook verifies a secret header. Site endpoints: CORS only for the site origin, size limits, and per-address rate limits (60 link attempts and 1200 statistics events per hour; migration 0006).
 8. The browser sync key is stored on the server only as a SHA-256 hash.
 
 ## Flow
