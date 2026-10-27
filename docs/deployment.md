@@ -11,7 +11,7 @@ Pull requests only run the checks in `ci.yml` (site tests and build, Worker type
 
 ## What each deploy does
 
-- **Site** (any change outside `worker/`, `docs/` and `*.md`): tests, build, `wrangler deploy`.
+- **Site** (any change outside `worker/`, `docs/` and `*.md`): tests, build, `wrangler deploy` (up to 3 attempts: Cloudflare's asset upload sometimes fails with a transient error, code 10013).
 - **Bot** (any change under `worker/`): typecheck, tests, apply pending D1 migrations (`worker/migrations/`), `wrangler deploy`.
 
 Migrations run automatically, so a migration must be safe to run against the live database: add tables and columns, do not drop or rewrite data in the same release that stops using it.
