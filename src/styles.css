@@ -146,9 +146,6 @@ footer p { margin: 4px 0; }
 .panel label { display: flex; flex-direction: column; gap: 6px; font-weight: 600; font-size: .92rem; }
 .panel input { border: 1px solid var(--line); background: var(--surface-2); border-radius: 10px; padding: 10px 12px; font-weight: 500; font-size: max(16px, 1rem); }
 /* iPhone zooms the page if an input font is under 16px, so inputs are always at least 16px */
-.panel details { font-size: .92rem; }
-.panel details summary { cursor: pointer; color: var(--accent); font-weight: 600; margin-bottom: 10px; }
-.panel details label { margin-top: 10px; }
 .hint { color: var(--muted); font-size: .86rem; margin: 0; }
 .loading { min-height: 70vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; color: var(--muted); text-align: center; padding: 18px; }
 .spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--accent); animation: spin .9s linear infinite; }
@@ -156,9 +153,6 @@ footer p { margin: 4px 0; }
 .spinner.small { display: inline-block; width: 16px; height: 16px; border-width: 2px; vertical-align: -3px; }
 dialog.reminders { max-width: min(480px, calc(100vw - 32px)); }
 dialog.reminders .open-bot { display: inline-block; text-decoration: none; text-align: center; margin: 4px 0 8px; }
-dialog.reminders .more-info { margin: 0 0 12px; }
-dialog.reminders .more-info p { margin: 8px 0 0; font-size: .92rem; }
-dialog.reminders .more-info summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: .92rem; }
 dialog.reminders .waiting { color: var(--muted); font-size: .92rem; }
 dialog.reminders .error { margin: 8px 0 0; }
 .loading { gap: 30px; transition: opacity .22s ease; }
@@ -204,8 +198,6 @@ dialog.confirm h2 { font-family: var(--display); font-weight: 500; font-size: 1.
 dialog.confirm p { margin: 0 0 8px; color: var(--muted); font-size: .94rem; }
 dialog.confirm .row { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; margin-top: 16px; }
 .btn.danger { background: var(--over); border-color: var(--over); color: #fff; }
-.remember { flex-direction: row !important; align-items: center; gap: 10px !important; font-weight: 600; }
-.remember input { width: 18px; height: 18px; accent-color: var(--accent); margin: 0; padding: 0; }
 .warn-note { color: var(--warn-ink); font-weight: 500; font-size: .84rem; }
 /* Burning: due today, tomorrow or the day after */
 @keyframes flicker { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
@@ -238,4 +230,31 @@ dialog.confirm .row { display: flex; flex-wrap: wrap; justify-content: flex-end;
   .rail .big.word { font-size: 1.3rem; }
   .rail .cap, .rail .date { margin-top: 0; }
   .chip .nm { max-width: 16ch; }
+}
+
+/* Checkbox */
+label.cbx, .panel label.cbx { position: relative; display: inline-flex; flex-direction: row; align-items: center; gap: 10px; margin: 0; cursor: pointer; font-weight: 600; font-size: .95rem; color: var(--ink); }
+.cbx input { position: absolute; left: 0; top: 50%; width: 22px; height: 22px; margin: -11px 0 0; padding: 0; opacity: 0; cursor: pointer; }
+.cbx-box { width: 22px; height: 22px; flex: none; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--line); border-radius: 7px; background: var(--surface-2); transition: background .15s, border-color .15s, transform .12s; }
+.cbx-box svg { width: 14px; height: 14px; fill: none; stroke: var(--accent-ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 18; stroke-dashoffset: 18; transition: stroke-dashoffset .2s ease .05s; }
+.cbx:hover .cbx-box { border-color: var(--muted); }
+.cbx input:checked + .cbx-box { background: var(--accent); border-color: var(--accent); }
+.cbx input:checked + .cbx-box svg { stroke-dashoffset: 0; }
+.cbx input:active + .cbx-box { transform: scale(.92); }
+.cbx input:focus-visible + .cbx-box { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Smooth "show more" */
+.disclosure-toggle { all: unset; box-sizing: border-box; display: inline-flex; align-items: center; gap: 8px; padding: 4px 0; cursor: pointer; color: var(--accent); font-weight: 600; font-size: .92rem; }
+.disclosure-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 6px; }
+.chev { width: 7px; height: 7px; margin: 0 3px 2px 1px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(-45deg); transition: transform .22s ease; }
+.disclosure.open .chev { transform: rotate(45deg); }
+.disclosure-body { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows .28s ease, opacity .22s ease; }
+.disclosure.open .disclosure-body { grid-template-rows: 1fr; opacity: 1; }
+.disclosure-inner { min-height: 0; overflow: hidden; }
+.disclosure-inner > :first-child { margin-top: 8px; }
+.panel .disclosure-inner label { margin-top: 10px; }
+.more-info-text { margin: 0 0 4px; font-size: .92rem; color: var(--muted); }
+dialog.reminders .disclosure { margin: 0 0 12px; }
+@media (prefers-reduced-motion: reduce) {
+  .cbx-box, .cbx-box svg, .chev, .disclosure-body { transition: none; }
 }

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent, type SyntheticEvent } from 'react';
 import { REMINDER_TEXTS as T } from '../config';
 import type { RemindersApi } from '../types';
+import { Checkbox } from './Checkbox';
+import { Disclosure } from './Disclosure';
 
 interface Props {
   api: RemindersApi;
@@ -80,14 +82,10 @@ export const RemindersDialog = ({ api, onClose }: Props) => {
         <>
           <p>{T.intro}</p>
           <p>{T.consentShort}</p>
-          <details className="more-info">
-            <summary>{T.moreInfo}</summary>
-            <p>{T.consentDetails}</p>
-          </details>
-          <label className="remember">
-            <input type="checkbox" checked={agreed} onChange={handleAgreeChange} />
-            {T.consentCheck}
-          </label>
+          <Disclosure summary={T.moreInfo}>
+            <p className="more-info-text">{T.consentDetails}</p>
+          </Disclosure>
+          <Checkbox label={T.consentCheck} checked={agreed} onChange={handleAgreeChange} />
           {needConsent && (
             <p className="error" role="alert">
               {T.consentRequired}
