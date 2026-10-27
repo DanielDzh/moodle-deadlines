@@ -1,8 +1,9 @@
-import type { CSSProperties } from 'react';
+import type { ChangeEvent, CSSProperties } from 'react';
 import { KIND_LABEL } from '../config';
 import { fmtDateTime, fmtDayLong, fmtTime } from '../lib/dates';
 import { shortText } from '../lib/text';
 import type { Course, DecoratedTask } from '../types';
+import { Checkbox } from './Checkbox';
 
 interface Props {
   task: DecoratedTask;
@@ -54,6 +55,7 @@ function StatusBadges({ task, burning }: { task: DecoratedTask; burning: boolean
 
 export function TaskCard({ task, course, done, burning, onToggleDone }: Props) {
   const now = new Date();
+  const handleToggle = (e: ChangeEvent<HTMLInputElement>) => onToggleDone(task.key, e.target.checked);
   const intro = task.intro || '';
   const desc = intro ? shortText(intro) : '';
   const isLong = intro.replace(/\s+/g, ' ').length > desc.length;
@@ -92,10 +94,7 @@ export function TaskCard({ task, course, done, burning, onToggleDone }: Props) {
           {notYetOpen && <span className="opens">Відкриється {fmtDateTime(task.open, now)}</span>}
           {hasCutoff && <span className="soft">Остаточний термін: {fmtDateTime(task.cutoff, now)}</span>}
         </div>
-        <label className="check">
-          <input type="checkbox" checked={done} onChange={(e) => onToggleDone(task.key, e.target.checked)} />
-          <span>Виконано</span>
-        </label>
+        <Checkbox label="Виконано" checked={done} onChange={handleToggle} />
       </div>
     </article>
   );
