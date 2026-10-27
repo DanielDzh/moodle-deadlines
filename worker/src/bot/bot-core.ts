@@ -1,3 +1,4 @@
+import { DELIVERY } from '../config';
 import { TEXTS } from './texts';
 import type { BotCore, BotRepo } from './types';
 
@@ -21,4 +22,10 @@ export const createBotCore = (repo: BotRepo, clock: () => number = () => Math.fl
   },
 
   help: () => TEXTS.help,
+
+  taskAction: async (chatId, action, taskKey) => {
+    const ok = action === 'done' ? await repo.muteTask(chatId, taskKey) : await repo.snoozeTask(chatId, taskKey, clock() + DELIVERY.snoozeSec);
+    if (!ok) return TEXTS.taskGone;
+    return action === 'done' ? TEXTS.taskDone : TEXTS.taskSnoozed;
+  },
 });

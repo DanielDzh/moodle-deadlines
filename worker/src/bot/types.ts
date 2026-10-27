@@ -6,6 +6,10 @@ export interface BotRepo {
   deleteByChat: (chatId: number) => Promise<boolean>;
   /** How many upcoming unfinished tasks are tracked for the chat; null if the chat is not linked. */
   trackedTasks: (chatId: number, now: number) => Promise<number | null>;
+  /** "Already done": no more reminders for the task. False if the chat or the task is unknown. */
+  muteTask: (chatId: number, taskKey: string) => Promise<boolean>;
+  /** "Remind later": skip the task until `until` and let its last reminder go out again afterwards. */
+  snoozeTask: (chatId: number, taskKey: string, until: number) => Promise<boolean>;
 }
 
 export interface BotCore {
@@ -13,4 +17,6 @@ export interface BotCore {
   stop: (chatId: number) => Promise<string>;
   status: (chatId: number) => Promise<string>;
   help: () => string;
+  /** Handles a press on a reminder button; returns the short answer shown to the user. */
+  taskAction: (chatId: number, action: 'done' | 'snooze', taskKey: string) => Promise<string>;
 }

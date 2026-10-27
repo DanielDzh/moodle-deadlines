@@ -14,6 +14,7 @@ const task = (over: Partial<PlannerTask> = {}): PlannerTask => ({
   done: false,
   submitted: false,
   muted: false,
+  snoozeUntil: 0,
   ...over,
 });
 
@@ -55,6 +56,7 @@ describe('reminder planner', () => {
     ['done', { done: true }],
     ['submitted', { submitted: true }],
     ['muted with the button', { muted: true }],
+    ['snoozed', { snoozeUntil: kyiv(27, 16, 0) }],
     ['without a deadline', { due: 0 }],
     ['overdue', { due: kyiv(27, 10, 0) }],
   ] as const)('skips %s', (_name, over) => {
@@ -80,6 +82,12 @@ describe('reminder planner', () => {
       const t = task({ due: kyiv(27, 5, 0) });
       expect(plan(t, kyiv(27, 1, 0))).toEqual([]);
     });
+  });
+
+  it('sends again once the snooze is over', () => {
+    const t = task({ snoozeUntil: kyiv(27, 16, 0) });
+    expect(plan(t, kyiv(27, 15, 0))).toEqual([]);
+    expect(plan(t, kyiv(27, 16, 0))).toEqual(['24h']);
   });
 
   it('handles several tasks independently', () => {

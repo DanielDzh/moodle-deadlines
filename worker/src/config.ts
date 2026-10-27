@@ -44,5 +44,35 @@ export const PATTERNS = {
 /** Latest sensible deadline (year 2100), seconds. */
 export const MAX_DUE = 4_102_444_800;
 
+/** Reminder delivery. */
+export const DELIVERY = {
+  /** Only tasks due within this many seconds are considered each minute (24 h plus room for night shifting). */
+  horizonSec: 36 * 3600,
+  /** At most this many reminders per user per cron tick; the rest go out on the next ticks. */
+  maxPerUserPerTick: 5,
+  /** "Remind me later" in the bot, seconds. */
+  snoozeSec: 3600,
+  /** Telegram allows 64 bytes in callback data. */
+  maxCallbackBytes: 64,
+  requestTimeoutMs: 10_000,
+} as const;
+
+/** Fetching tasks from Moodle on behalf of users. */
+export const MOODLE = {
+  /** A user's data is refreshed at most this often, seconds. A failure doubles the wait, up to 16x. */
+  refreshIntervalSec: 3 * 3600,
+  maxFailureBackoffPower: 4,
+  /** Submission statuses are fetched only for assignments due within this window, seconds. */
+  statusWindowSec: 7 * 24 * 3600,
+  /** At most this many status calls per refresh, to stay far below the Worker's subrequest limit. */
+  maxStatusCalls: 15,
+  statusConcurrency: 4,
+  requestTimeoutMs: 10_000,
+  maxResponseBytes: 2 * 1024 * 1024,
+  userAgent: 'moodle-deadlines-bot (+https://github.com/DanielDzh/moodle-deadlines)',
+} as const;
+
+export const TELEGRAM_API_BASE = 'https://api.telegram.org';
+
 /** Encrypted token: the format version is a prefix so the algorithm can be changed later. */
 export const TOKEN_FORMAT_VERSION = 'v1';

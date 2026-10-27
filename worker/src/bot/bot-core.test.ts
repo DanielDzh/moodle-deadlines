@@ -9,6 +9,8 @@ const NOW = 1_800_000_000;
 const memoryRepo = (codes: Record<string, number> = {}) => {
   const chats = new Map<number, number>(); // chatId → task count
   const used = new Set<string>();
+  const muted: string[] = [];
+  const snoozed: [string, number][] = [];
   const repo: BotRepo = {
     bindChat: async (code, chatId, now) => {
       const expires = codes[code];
@@ -19,8 +21,10 @@ const memoryRepo = (codes: Record<string, number> = {}) => {
     },
     deleteByChat: async (chatId) => chats.delete(chatId),
     trackedTasks: async (chatId) => chats.get(chatId) ?? null,
+    muteTask: async (chatId, key) => chats.has(chatId) && key === 'assign-1' && (muted.push(key), true),
+    snoozeTask: async (chatId, key, until) => chats.has(chatId) && key === 'assign-1' && (snoozed.push([key, until]), true),
   };
-  return { repo, chats };
+  return { repo, chats, muted, snoozed };
 };
 
 describe('bot behaviour', () => {
@@ -63,6 +67,24 @@ describe('bot behaviour', () => {
     expect(await core.status(9)).toBe(TEXTS.statusNotLinked);
     await core.start(9, 'GOODCODE12');
     expect(await core.status(9)).toBe(TEXTS.statusLinked(3));
+  });
+
+  it('the "Already done" button mutes the task, the "Later" button snoozes it for an hour', async () => {
+    const { repo, muted, snoozed } = memoryRepo({ GOODCODE12: NOW + 600 });
+    const core = createBotCore(repo, () => NOW);
+    await core.start(5, 'GOODCODE12');
+    expect(await core.taskAction(5, 'done', 'assign-1')).toBe(TEXTS.taskDone);
+    expect(await core.taskAction(5, 'snooze', 'assign-1')).toBe(TEXTS.taskSnoozed);
+    expect(muted).toEqual(['assign-1']);
+    expect(snoozed).toEqual([['assign-1', NOW + 3600]]);
+  });
+
+  it('button presses for unknown chats or tasks answer that the task is gone', async () => {
+    const { repo } = memoryRepo({ GOODCODE12: NOW + 600 });
+    const core = createBotCore(repo, () => NOW);
+    expect(await core.taskAction(9, 'done', 'assign-1')).toBe(TEXTS.taskGone);
+    await core.start(5, 'GOODCODE12');
+    expect(await core.taskAction(5, 'snooze', 'nope')).toBe(TEXTS.taskGone);
   });
 
   it('/help lists the commands', () => {

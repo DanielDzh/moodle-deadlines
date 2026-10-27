@@ -1,6 +1,6 @@
 # Plan: deadline reminders via a Telegram bot (option A: Moodle token on the server)
 
-Status: stages 1-3 done (Worker skeleton, schema, token encryption, reminder planner, bot commands, site API, the reminders dialog on the site with consent, sync and logout cleanup). Next: stage 4 (server-side refresh from Moodle, cron delivery, buttons).
+Status: stages 1-4 done in code (stage 4 verified locally end to end; verify on the real deployment) (Worker skeleton, schema, token encryption, reminder planner, bot commands, site API, the reminders dialog on the site with consent, sync and logout cleanup). Next: stage 5 polish and stage 6 real-account checks.
 
 ## Decisions
 - Channel: Telegram bot `@moodle_deadlines_bot`. Backend: Cloudflare Worker + D1 + cron, in `worker/` of this repository.
@@ -45,7 +45,7 @@ Status: stages 1-3 done (Worker skeleton, schema, token encryption, reminder pla
 1. Skeleton, D1 schema, token encryption, a pure "what to send now" function + tests. **Done.**
 2. Bot: webhook, `/start`, `/stop`, `/status`, `/help`. **Done** and deployed.
 3. Linking and sync: endpoints, validation, limits, site dialog. **Done**, verified end to end locally (`wrangler dev` + local D1): link, simulated Start through the real webhook, task sync, done flag sync, logout cleanup.
-4. Server-side refresh from Moodle + cron delivery + buttons. Also a scheduled cleanup: expired unfinished link attempts (they hold an encrypted token until purged), tasks 7 days past their deadline, users inactive for 60 days.
+4. Server-side refresh from Moodle + cron delivery + buttons. **Done**: cron every minute delivers due reminders (with Done / Later buttons), refreshes one user per tick every 3 h (backoff on failures, expired tokens pause the user and notify once), and cleans up every 10 minutes. Also a scheduled cleanup: expired unfinished link attempts (they hold an encrypted token until purged), tasks 7 days past their deadline, users inactive for 60 days.
 5. Site UI: states, consent, deletion. Privacy text.
 6. Deploy, verify on a real account, verify data deletion.
 
