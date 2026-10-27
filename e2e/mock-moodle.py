@@ -139,6 +139,7 @@ with sync_playwright() as pw:
     # 1. Login
     page.goto(APP + '?site=moodle.example.edu/my/courses.php')
     check('address field is pre-filled from ?site= and normalised', page.input_value('input[name=site]') == SITE)
+    check('the login hints keep their plain style', page.evaluate("(() => { const s = getComputedStyle(document.querySelector('p.hint')); return s.position === 'static' && s.backgroundColor === 'rgba(0, 0, 0, 0)'; })()"))
     page.fill('#username', 'maria'); page.fill('#password', 'wrong'); page.click('button[type=submit]')
     page.wait_for_selector('.error:has-text("Неправильний")')
     check('a wrong password shows an error', True)
@@ -170,13 +171,13 @@ with sync_playwright() as pw:
     check('every card uses the styled checkbox', page.locator('.card .cbx').count() == page.locator('.card').count() > 0)
 
     # 2a. First-visit hint: shown once, closing it is remembered
-    check('the reminders hint is shown to a new user', page.locator('.hint-anchor aside.hint').count() == 1)
+    check('the reminders hint is shown to a new user', page.locator('.rem-hint-anchor aside.rem-hint').count() == 1)
     page.screenshot(path=f'{SHOTS}/desktop-hint.png', full_page=False)
-    page.click('aside.hint .hint-close')
-    check('closing the hint hides it and remembers it', page.locator('aside.hint').count() == 0 and page.evaluate("localStorage.getItem('md.hintReminders')") == 'true')
+    page.click('aside.rem-hint .rem-hint-close')
+    check('closing the hint hides it and remembers it', page.locator('aside.rem-hint').count() == 0 and page.evaluate("localStorage.getItem('md.hintReminders')") == 'true')
     page.reload()
     page.wait_for_selector('.hero')
-    check('the closed hint stays closed after a reload', page.locator('aside.hint').count() == 0)
+    check('the closed hint stays closed after a reload', page.locator('aside.rem-hint').count() == 0)
 
     # 2b. Reminders dialog, donate link and statistics events
     page.click('header .btn:has-text("Нагадування")')

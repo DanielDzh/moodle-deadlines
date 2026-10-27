@@ -112,7 +112,7 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, remin
         </div>
         <div className="actions">
           <DonateLink variant="icon" />
-          <span className={showHint ? 'hint-anchor has-hint' : 'hint-anchor'}>
+          <span className={showHint ? 'rem-hint-anchor has-rem-hint' : 'rem-hint-anchor'}>
             <button type="button" className="btn ghost" onClick={openReminders}>
               🔔 {remindersState === 'active' ? REMINDER_TEXTS.buttonActive : REMINDER_TEXTS.button}
             </button>
