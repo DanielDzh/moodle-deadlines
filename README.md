@@ -4,8 +4,9 @@
 urgent to the furthest away. Sign in with your Moodle account and see at a glance what is overdue,
 what is due this week and what is burning right now.
 
-Works with any Moodle that allows the official Moodle mobile app. No backend, no sign-up, nothing
-changes in Moodle.
+Works with any Moodle that allows the official Moodle mobile app. No sign-up, nothing changes in
+Moodle, and by default no backend: the site talks to your Moodle straight from the browser. Optional
+[Telegram reminders](#telegram-reminders-optional) add a small server, only if you turn them on.
 
 <p align="center">
   <img src="docs/screenshots/phone-login.png" width="230" alt="Sign in with your Moodle address" />
@@ -29,6 +30,7 @@ changes in Moodle.
 - **Always fresh.** Cached data shows instantly, fresh data is pulled from Moodle every time the page opens.
 - **Light and dark themes**, built mobile-first, installable to the home screen.
 - **Any Moodle.** Paste the address of any page of your Moodle; a link like `?site=moodle.uni.edu` pre-fills it.
+- **Telegram reminders** (optional): a bot messages you 24 h and 3 h before an unsubmitted deadline, even when you do not open the site.
 
 <p align="center">
   <img src="docs/screenshots/desktop-board.png" width="49%" alt="Desktop — overdue and this week" />
@@ -51,8 +53,9 @@ Browser ──► /login/token.php        login + password → token (same as th
         ──► builds the timeline locally and caches it in the browser
 ```
 
-The site is fully static. All requests go straight from the student's browser to their Moodle — there is no
-server in between that could see a password or a token.
+By default the site is fully static. All requests go straight from the student's browser to their Moodle — there is no
+server in between that could see a password or a token. Only if a student turns on Telegram reminders does a Worker
+store their token (see below).
 
 ## Privacy & security
 
@@ -65,6 +68,25 @@ server in between that could see a password or a token.
 - **Untrusted content stays inert.** Descriptions from Moodle are converted to plain text (scripts are dropped)
   and links are allowed only if they are `http(s)`.
 - **Strict headers** via `public/_headers`: a tight Content-Security-Policy, no framing, no referrer.
+
+The plain-language privacy notice shown to students is [`public/privacy.html`](public/privacy.html).
+
+## Telegram reminders (optional)
+
+A student can link the site to a Telegram bot ([`worker/`](worker/), a Cloudflare Worker with a D1 database):
+
+- The site sends the Moodle token to the Worker, which stores it **encrypted** (AES-256-GCM, key kept as a Worker
+  secret, user id bound as AAD). Only a hash of the browser's sync key is stored; it authenticates the site API.
+- Every minute a cron job sends the reminders that are due (24 h and 3 h before a deadline, quiet hours 23:00-08:00,
+  "Already done" and "Later" buttons) and refreshes one user's tasks from Moodle (every 3 hours per user), so tasks
+  added later are covered even if the student never opens the site again.
+- The Moodle address is validated before every fetch (https only, public domain names, no redirects, size and time
+  limits). An expired token pauses the user and notifies them once.
+- Everything is deletable: the button on the site, `/stop` in the bot, logging out, and automatic cleanup (tasks 7 days
+  after a deadline, abandoned link attempts after 10 minutes, users who have not visited for 60 days).
+
+Design notes and stages: [`docs/plans/telegram-reminders.md`](docs/plans/telegram-reminders.md). Deployment:
+[`docs/deployment.md`](docs/deployment.md).
 
 ## Tech stack
 
