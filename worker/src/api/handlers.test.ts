@@ -22,6 +22,7 @@ const memory = () => {
       return found ? { id: found.id, status: found.status } : null;
     },
     replaceTasks: async (id, list) => (tasks.set(id, [...list]), list.length),
+    doneKeys: async (id) => (tasks.get(id) ?? []).filter((t) => t.done).map((t) => t.key),
     deleteUsersBySyncKey: async (hash) => {
       for (const [id, u] of users) if (u.syncKeyHash === hash) (users.delete(id), tasks.delete(id));
     },
@@ -96,6 +97,19 @@ describe('site API', () => {
       expect((await call(method, path, body, null)).status).toBe(401);
       expect((await call(method, path, body, 'short')).status).toBe(401);
     }
+  });
+
+  it('status lists the tasks that are done, so the site can tick them', async () => {
+    const { call, users } = setup();
+    await call('POST', '/api/link/start', start, null);
+    const row = [...users.values()][0];
+    const read = async () => (await (await call('GET', '/api/link/status')).json()) as { state: string; done: string[] };
+    expect(await read()).toEqual({ state: 'pending', done: [] });
+    row.status = 'active';
+    await call('POST', '/api/sync', { items: [{ ...item, key: 'a', done: true }, { ...item, key: 'b', done: false }, { ...item, key: 'c', done: true }] });
+    expect(await read()).toEqual({ state: 'active', done: ['a', 'c'] });
+    row.status = 'paused_auth';
+    expect(await read()).toEqual({ state: 'paused', done: [] });
   });
 
   it('sync works only for an active link', async () => {

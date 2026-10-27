@@ -55,7 +55,11 @@ export const handleApi = async (request: Request, deps: ApiDeps): Promise<Respon
       const keyHash = await sha256Hex(syncKey);
       const user = await deps.repo.findBySyncKeyHash(keyHash);
 
-      if (route === 'GET /api/link/status') return json({ state: stateOf(user?.status) });
+      if (route === 'GET /api/link/status') {
+        const state = stateOf(user?.status);
+        // The site merges these into its own "Виконано" ticks before it pushes, so a press in the bot is not overwritten.
+        return json({ state, done: user && state === 'active' ? await deps.repo.doneKeys(user.id) : [] });
+      }
 
       if (route === 'POST /api/unlink') {
         await deps.repo.deleteUsersBySyncKey(keyHash);

@@ -116,9 +116,11 @@ export interface ApiRepo {
   pendingCount: () => Promise<number>;
   createPending: (user: NewPendingUser) => Promise<void>;
   findBySyncKeyHash: (hash: string) => Promise<{ id: string; status: string } | null>;
-  /** Makes the user's tracked tasks equal to the given list (keeps the per-task "muted" flag). Returns the count. */
+  /** Makes the user's tracked tasks equal to the given list (keeps the snooze setting). Returns the count. */
   replaceTasks: (userId: string, tasks: readonly SyncTask[], now: number) => Promise<number>;
   /** Removes every user (and their tasks and sent reminders) that belongs to this browser key. */
+  /** Keys of the user's tasks that are done (ticked on the site or pressed "Already done" in the bot). */
+  doneKeys: (userId: string) => Promise<string[]>;
   deleteUsersBySyncKey: (hash: string) => Promise<void>;
   /** Removes only the unfinished link attempts of this browser key. */
   deletePendingBySyncKey: (hash: string) => Promise<void>;

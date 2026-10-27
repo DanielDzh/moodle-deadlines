@@ -27,9 +27,9 @@ export const createUsersRepo = (db: D1Database): BotRepo => ({
     return (result.meta.changes ?? 0) > 0;
   },
 
-  muteTask: async (chatId, taskKey) => {
+  markDone: async (chatId, taskKey) => {
     const result = await db
-      .prepare('UPDATE tasks SET muted = 1 WHERE key = ?2 AND user_id = (SELECT id FROM users WHERE chat_id = ?1)')
+      .prepare('UPDATE tasks SET done = 1 WHERE key = ?2 AND user_id = (SELECT id FROM users WHERE chat_id = ?1)')
       .bind(chatId, taskKey)
       .run();
     return (result.meta.changes ?? 0) > 0;

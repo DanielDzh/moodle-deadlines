@@ -35,7 +35,7 @@ export const createBotCore = (
   help: () => TEXTS.help,
 
   taskAction: async (chatId, action, taskKey) => {
-    const ok = action === 'done' ? await repo.muteTask(chatId, taskKey) : await repo.snoozeTask(chatId, taskKey, clock() + DELIVERY.snoozeSec);
+    const ok = action === 'done' ? await repo.markDone(chatId, taskKey) : await repo.snoozeTask(chatId, taskKey, clock() + DELIVERY.snoozeSec);
     if (!ok) return TEXTS.taskGone;
     return action === 'done' ? TEXTS.taskDone : TEXTS.taskSnoozed;
   },

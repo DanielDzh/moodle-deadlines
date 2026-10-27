@@ -3,6 +3,7 @@ import { BURN_DAYS, KEYS, REMINDER_TEXTS } from '../config';
 import { useStoredState } from '../hooks/useStoredState';
 import { useMinute } from '../hooks/useMinute';
 import { track } from '../lib/analytics';
+import { mergeRemoteDone } from '../lib/reminders-sync';
 import { buildBoard } from '../lib/board';
 import { fmtDateTime, fmtDayLong } from '../lib/dates';
 import type { Course, RemindersApi, Snapshot, Theme } from '../types';
@@ -55,7 +56,13 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, remin
   const closeReminders = () => setRemindersOpen(false);
 
   // Push the tasks to the reminders service after every refresh and every tick change (debounced inside the hook).
-  const { syncSoon, state: remindersState } = reminders;
+  const { syncSoon, state: remindersState, remoteDone } = reminders;
+
+  // Tasks marked "Already done" in the bot get ticked here. This runs before the sync below, which sends the merged list.
+  useEffect(() => {
+    if (remoteDone.length) setDone((previous) => mergeRemoteDone(previous, remoteDone));
+  }, [remoteDone, setDone]);
+
   useEffect(() => {
     syncSoon(snapshot, done);
   }, [syncSoon, remindersState, snapshot, done]);

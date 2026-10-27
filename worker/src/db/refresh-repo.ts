@@ -34,7 +34,7 @@ export const createRefreshRepo = (db: D1Database): RefreshRepo => ({
     const stale = existing.results.map((r) => r.key).filter((k) => !keep.has(k));
 
     await db.batch([
-      // done, muted and snooze_until belong to the user and are never touched here;
+      // done and snooze_until belong to the user and are never touched here;
       // submitted keeps its old value when Moodle was not asked (null).
       ...tasks.slice(0, LIMITS.maxTasks).map((t) =>
         db

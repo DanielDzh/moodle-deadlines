@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildReminderItems } from './reminders-sync';
+import { buildReminderItems, mergeRemoteDone, sameKeys } from './reminders-sync';
 import type { Snapshot, Task } from '../types';
 
 const NOW = 1_800_000_000;
@@ -28,5 +28,35 @@ describe('buildReminderItems', () => {
   it('treats graded as submitted and tolerates an unknown course', () => {
     const items = buildReminderItems(snapshot([task({ status: 'graded', courseid: 99 })]), {}, NOW);
     expect(items[0]).toMatchObject({ submitted: true, course: '' });
+  });
+});
+
+describe('mergeRemoteDone', () => {
+  it('ticks the tasks the bot marked done and keeps the existing ticks', () => {
+    expect(mergeRemoteDone({ a: true }, ['b', 'c'])).toEqual({ a: true, b: true, c: true });
+  });
+
+  it('never removes a tick the site has', () => {
+    expect(mergeRemoteDone({ a: true, b: true }, [])).toEqual({ a: true, b: true });
+  });
+
+  it('returns the same object when there is nothing new, so no re-render happens', () => {
+    const done = { a: true };
+    expect(mergeRemoteDone(done, ['a'])).toBe(done);
+    expect(mergeRemoteDone(done, [])).toBe(done);
+  });
+
+  it('does not mutate its input', () => {
+    const done = { a: true };
+    mergeRemoteDone(done, ['b']);
+    expect(done).toEqual({ a: true });
+  });
+});
+
+describe('sameKeys', () => {
+  it('compares as sets, ignoring order', () => {
+    expect(sameKeys(['a', 'b'], ['b', 'a'])).toBe(true);
+    expect(sameKeys(['a'], ['a', 'b'])).toBe(false);
+    expect(sameKeys([], [])).toBe(true);
   });
 });

@@ -21,7 +21,7 @@ const memoryRepo = (codes: Record<string, number> = {}) => {
     },
     deleteByChat: async (chatId) => chats.delete(chatId),
     trackedTasks: async (chatId) => chats.get(chatId) ?? null,
-    muteTask: async (chatId, key) => chats.has(chatId) && key === 'assign-1' && (muted.push(key), true),
+    markDone: async (chatId, key) => chats.has(chatId) && key === 'assign-1' && (muted.push(key), true),
     snoozeTask: async (chatId, key, until) => chats.has(chatId) && key === 'assign-1' && (snoozed.push([key, until]), true),
   };
   return { repo, chats, muted, snoozed };
@@ -69,7 +69,7 @@ describe('bot behaviour', () => {
     expect(await core.status(9)).toBe(TEXTS.statusLinked(3));
   });
 
-  it('the "Already done" button mutes the task, the "Later" button snoozes it for an hour', async () => {
+  it('the "Already done" button marks the task done, the "Later" button snoozes it for an hour', async () => {
     const { repo, muted, snoozed } = memoryRepo({ GOODCODE12: NOW + 600 });
     const core = createBotCore(repo, () => NOW);
     await core.start(5, 'GOODCODE12');
