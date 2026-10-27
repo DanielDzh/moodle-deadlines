@@ -5,8 +5,9 @@ E2E check of the built site against a mocked Moodle (no real Moodle needed).
     pip install playwright && playwright install chromium
     TZ=Europe/Kyiv python e2e/mock-moodle.py dist docs/screenshots
 
-Checks login, bands, "burning", filters, ticks, theme, logout, the phone layout
-and refreshes the README screenshots along the way.
+Checks login, the loader, bands, "burning", filters, ticks, theme, logout, the reminders dialog, anonymous
+statistics events, the phone layout, and refreshes the README screenshots along the way.
+The reminders Worker is mocked inside the test: nothing here talks to the real service.
 """
 import json, sys, time, threading, functools, http.server, datetime as dt
 from urllib.parse import parse_qs
@@ -87,11 +88,36 @@ def handle(route, request):
         ok = form.get('username') == ['maria'] and form.get('password') == ['secret']
         body = {'token': 'TOKEN123'} if ok else {'error': 'Invalid login', 'errorcode': 'invalidlogin'}
     elif url.endswith('/webservice/rest/server.php'):
-        time.sleep(0.05)
+        time.sleep(0.15)
         body = ws(form['wsfunction'][0], form)
     else:
         return route.fulfill(status=404, body='')
     route.fulfill(status=200, headers=hdr, body=json.dumps(body))
+
+# --- mocked reminders Worker (the real one must never see test traffic)
+WORKER = 'https://moodle-deadlines-bot.tinyapp.workers.dev'
+hits = []                     # anonymous statistics events the site sent
+worker_calls = []             # (method, path) of every other call
+reminders = {'state': 'none'}
+CORS = {'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'Authorization, Content-Type', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS'}
+
+def worker(route, request):
+    path = request.url.replace(WORKER, '')
+    if request.method == 'OPTIONS':
+        return route.fulfill(status=204, headers=CORS)
+    if path == '/api/hit':
+        hits.append(json.loads(request.post_data or '{}'))
+        return route.fulfill(status=204, headers=CORS)
+    worker_calls.append((request.method, path))
+    body = {'ok': True}
+    if path == '/api/link/start':
+        reminders['state'] = 'pending'
+        body = {'code': 'ABCDEFGH23', 'expiresAt': int(time.time()) + 600, 'botUrl': 'https://t.me/moodle_deadlines_bot?start=ABCDEFGH23'}
+    elif path == '/api/link/status':
+        body = {'state': reminders['state'], 'done': []}
+    elif path == '/api/unlink':
+        reminders['state'] = 'none'
+    route.fulfill(status=200, headers={**CORS, 'Content-Type': 'application/json'}, body=json.dumps(body))
 
 results = []
 def check(name, cond):
@@ -102,6 +128,7 @@ with sync_playwright() as pw:
     b = pw.chromium.launch()
     ctx = b.new_context(viewport={'width': 1280, 'height': 900}, device_scale_factor=2, locale='uk-UA', timezone_id='Europe/Kyiv')
     ctx.route(f'{SITE}/**', handle)
+    ctx.route(f'{WORKER}/**', worker)
     ctx.route('https://fonts.googleapis.com/**', lambda r, q: r.abort())
     ctx.route('https://fonts.gstatic.com/**', lambda r, q: r.abort())
     page = ctx.new_page()
@@ -117,6 +144,8 @@ with sync_playwright() as pw:
     check('a wrong password shows an error', True)
     check('the password field is cleared after an attempt', page.input_value('#password') == '')
     page.fill('#password', 'secret'); page.click('button[type=submit]')
+    page.wait_for_selector('.loading .step')
+    check('the loader shows its three steps', page.locator('.loading .step').count() == 3)
     page.wait_for_selector('.hero', timeout=15000)
     page.wait_for_function("!document.querySelector('.loading')")
     check('the board loaded with the user name', page.inner_text('.who') == 'Марія Шевченко')
@@ -137,6 +166,29 @@ with sync_playwright() as pw:
     check('links open in a new tab', page.get_attribute('.card h3 a', 'target') == '_blank')
     check('noun forms in the band header', 'завдання' in page.inner_text('.band-week .cnt'))
     page.screenshot(path=f'{SHOTS}/desktop-board.png', full_page=False)
+
+    check('every card uses the styled checkbox', page.locator('.card .cbx').count() == page.locator('.card').count() > 0)
+
+    # 2b. Reminders dialog, donate link and statistics events
+    page.click('text=Нагадування')
+    page.wait_for_selector('dialog.reminders[open]')
+    page.click('dialog.reminders >> text=Підключити Telegram')
+    check('connecting without consent asks for it and calls nothing', page.locator('dialog.reminders .error').count() == 1 and ('POST', '/api/link/start') not in worker_calls)
+    page.locator('dialog.reminders .cbx input').check()
+    page.click('dialog.reminders >> text=Підключити Telegram')
+    page.wait_for_selector('dialog.reminders .pending-steps')
+    check('linking shows the two steps and the bot link', page.locator('dialog.reminders .pending-steps li').count() == 2 and page.get_attribute('dialog.reminders a.open-bot', 'href').startswith('https://t.me/moodle_deadlines_bot?start='))
+    page.screenshot(path=f'{SHOTS}/desktop-reminders.png')
+    page.click('dialog.reminders >> text=Скасувати')
+    page.wait_for_selector('dialog.reminders', state='detached')
+    check('cancelling removes the link on the server', ('POST', '/api/unlink') in worker_calls and reminders['state'] == 'none')
+    page.evaluate("document.querySelector('.donate.icon').addEventListener('click', (e) => e.preventDefault(), true)")
+    page.click('.donate.icon')
+    page.wait_for_function('true')
+    check('the donate link opens in a new tab', page.get_attribute('.donate.icon', 'target') == '_blank')
+    page.wait_for_timeout(300)
+    kinds = [h.get('event') for h in hits]
+    check(f'statistics events so far {kinds}', {'visit', 'login', 'reminders_open', 'donate_click'} <= set(kinds) and len({h.get('id') for h in hits}) == 1)
 
     # 3. Toggles and filters
     page.click('text=Приховати подані')
@@ -177,23 +229,34 @@ with sync_playwright() as pw:
     check('Esc only closes it', page.locator('dialog.confirm[open]').count() == 0 and page.locator('.hero').count() == 1)
     page.click('text=Вийти'); page.click('dialog .btn.danger')
     page.wait_for_selector('form.panel')
+    check('the privacy page is linked from the login screen', page.locator('a[href$="privacy.html"]').count() == 1)
     check('the token is removed after logout', page.evaluate("localStorage.getItem('md.token')") is None)
     check('ticks remain after logout', page.evaluate("localStorage.getItem('md.done')") is not None)
 
     # 7. Phone
     m = b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=3, is_mobile=True, has_touch=True, locale='uk-UA', timezone_id='Europe/Kyiv')
     m.route(f'{SITE}/**', handle)
+    m.route(f'{WORKER}/**', worker)
     mp = m.new_page()
     mp.on('pageerror', lambda e: errors.append(str(e)))
     mp.goto(APP + '?site=moodle.example.edu')
     mp.screenshot(path=f'{SHOTS}/phone-login.png')
     mp.fill('#username', 'maria'); mp.fill('#password', 'secret'); mp.click('button[type=submit]')
+    mp.wait_for_selector('.loading .step.done')
+    mp.screenshot(path=f'{SHOTS}/phone-loading.png')
     mp.wait_for_selector('.hero'); mp.wait_for_function("!document.querySelector('.loading')")
     mp.screenshot(path=f'{SHOTS}/phone-board.png')
     no_hscroll = mp.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     check('no horizontal scroll on the phone', no_hscroll)
     mp.evaluate("window.scrollTo(0, document.querySelector('.band-month').offsetTop - 10)")
     mp.screenshot(path=f'{SHOTS}/phone-month.png')
+
+    mp.evaluate('window.scrollTo(0, 0)')
+    mp.click('text=Нагадування')
+    mp.wait_for_selector('dialog.reminders[open]')
+    mp.wait_for_timeout(400)
+    mp.screenshot(path=f'{SHOTS}/phone-reminders.png')
+    mp.keyboard.press('Escape')
 
     # 7b. The "burning" threshold from the URL
     mp.goto(APP + '?burnDays=7'); mp.wait_for_selector('.hero'); mp.wait_for_function("!document.querySelector('.loading')")
@@ -206,6 +269,7 @@ with sync_playwright() as pw:
     mp.wait_for_selector('.error:has-text("Доступ застарів")', timeout=15000)
     check('a stale token returns to login with an explanation', True)
 
+    check('the Worker was only asked for known routes', {p for _, p in worker_calls} <= {'/api/link/start', '/api/link/status', '/api/unlink', '/api/sync'})
     real_errors = [e for e in errors if 'fonts.g' not in e and 'ERR_FAILED' not in e]
     check(f'no console errors {real_errors}', not real_errors)
     check('only read functions were called', all('_get_' in c for c in calls))

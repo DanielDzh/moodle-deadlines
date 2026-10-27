@@ -230,7 +230,7 @@ dialog.confirm .row { display: flex; flex-wrap: wrap; justify-content: flex-end;
 
 /* Checkbox */
 label.cbx, .panel label.cbx { position: relative; display: inline-flex; flex-direction: row; align-items: center; gap: 10px; margin: 0; cursor: pointer; font-weight: 600; font-size: .95rem; color: var(--ink); }
-.cbx input { position: absolute; left: 0; top: 50%; width: 22px; height: 22px; margin: -11px 0 0; padding: 0; opacity: 0; cursor: pointer; }
+.cbx input { position: absolute; z-index: 1; left: 0; top: 50%; width: 22px; height: 22px; margin: -11px 0 0; padding: 0; opacity: 0; cursor: pointer; }
 .cbx-box { width: 22px; height: 22px; flex: none; display: flex; align-items: center; justify-content: center; border: 1.5px solid var(--line); border-radius: 7px; background: var(--surface-2); transition: background .15s, border-color .15s, transform .12s; }
 .cbx-box svg { width: 14px; height: 14px; fill: none; stroke: var(--accent-ink); stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 18; stroke-dashoffset: 18; transition: stroke-dashoffset .2s ease .05s; }
 .cbx:hover .cbx-box { border-color: var(--muted); }
