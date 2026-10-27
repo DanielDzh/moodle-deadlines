@@ -11,6 +11,7 @@ import { BandSection } from './BandSection';
 import { DonateLink } from './DonateLink';
 import { Filters } from './Filters';
 import { RemindersDialog } from './RemindersDialog';
+import { RemindersHint } from './RemindersHint';
 import { Summary } from './Summary';
 
 const THEME_LABEL: Record<Theme, string> = {
@@ -49,14 +50,18 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, remin
   const [filter, setFilter] = useStoredState<number[]>(KEYS.filter, []);
   const burnDays = useMemo(burnDaysFromUrl, []);
   const [remindersOpen, setRemindersOpen] = useState(false);
+  const [hintDismissed, setHintDismissed] = useStoredState(KEYS.remindersHintDismissed, false);
+  const dismissHint = () => setHintDismissed(true);
   const openReminders = () => {
     track('reminders_open');
+    setHintDismissed(true);
     setRemindersOpen(true);
   };
   const closeReminders = () => setRemindersOpen(false);
 
   // Push the tasks to the reminders service after every refresh and every tick change (debounced inside the hook).
   const { syncSoon, state: remindersState, remoteDone } = reminders;
+  const showHint = remindersState === 'none' && !hintDismissed;
 
   // Tasks marked "Already done" in the bot get ticked here. This runs before the sync below, which sends the merged list.
   useEffect(() => {
@@ -107,9 +112,12 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, remin
         </div>
         <div className="actions">
           <DonateLink variant="icon" />
-          <button type="button" className="btn ghost" onClick={openReminders}>
-            🔔 {remindersState === 'active' ? REMINDER_TEXTS.buttonActive : REMINDER_TEXTS.button}
-          </button>
+          <span className={showHint ? 'hint-anchor has-hint' : 'hint-anchor'}>
+            <button type="button" className="btn ghost" onClick={openReminders}>
+              🔔 {remindersState === 'active' ? REMINDER_TEXTS.buttonActive : REMINDER_TEXTS.button}
+            </button>
+            {showHint && <RemindersHint onDismiss={dismissHint} />}
+          </span>
           <button type="button" className="btn ghost" onClick={onNextTheme}>
             {THEME_LABEL[theme]}
           </button>

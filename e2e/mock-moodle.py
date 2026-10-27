@@ -169,8 +169,17 @@ with sync_playwright() as pw:
 
     check('every card uses the styled checkbox', page.locator('.card .cbx').count() == page.locator('.card').count() > 0)
 
+    # 2a. First-visit hint: shown once, closing it is remembered
+    check('the reminders hint is shown to a new user', page.locator('.hint-anchor aside.hint').count() == 1)
+    page.screenshot(path=f'{SHOTS}/desktop-hint.png', full_page=False)
+    page.click('aside.hint .hint-close')
+    check('closing the hint hides it and remembers it', page.locator('aside.hint').count() == 0 and page.evaluate("localStorage.getItem('md.hintReminders')") == 'true')
+    page.reload()
+    page.wait_for_selector('.hero')
+    check('the closed hint stays closed after a reload', page.locator('aside.hint').count() == 0)
+
     # 2b. Reminders dialog, donate link and statistics events
-    page.click('text=Нагадування')
+    page.click('header .btn:has-text("Нагадування")')
     page.wait_for_selector('dialog.reminders[open]')
     page.click('dialog.reminders >> text=Підключити Telegram')
     check('connecting without consent asks for it and calls nothing', page.locator('dialog.reminders .error').count() == 1 and ('POST', '/api/link/start') not in worker_calls)
@@ -252,7 +261,7 @@ with sync_playwright() as pw:
     mp.screenshot(path=f'{SHOTS}/phone-month.png')
 
     mp.evaluate('window.scrollTo(0, 0)')
-    mp.click('text=Нагадування')
+    mp.click('header .btn:has-text("Нагадування")')
     mp.wait_for_selector('dialog.reminders[open]')
     mp.wait_for_timeout(400)
     mp.screenshot(path=f'{SHOTS}/phone-reminders.png')

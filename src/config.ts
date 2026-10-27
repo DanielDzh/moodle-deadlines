@@ -59,6 +59,8 @@ export const KEYS = {
   visitorId: 'md.vid',
   /** "Do not count me": set on the privacy page. */
   noStats: 'md.noStats',
+  /** The first-visit reminders hint was closed (or used) and must not come back. */
+  remindersHintDismissed: 'md.hintReminders',
 } as const;
 
 /**
@@ -114,6 +116,12 @@ export const REMINDERS = {
   requestTimeoutMs: 15000,
   /** Random bytes in the browser's sync key. */
   keyBytes: 32,
+} as const;
+
+/** First-visit hint that points at the reminders button (UI text, Ukrainian). */
+export const REMINDERS_HINT = {
+  text: 'Нагадування в Telegram: бот напише за добу й за 3 години до дедлайну',
+  dismiss: 'Закрити підказку',
 } as const;
 
 /** Text of the reminders dialog and its errors (UI text, Ukrainian). */
