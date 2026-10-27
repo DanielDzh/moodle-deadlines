@@ -1,5 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { DEFAULT_SITE } from '../config';
+import { DEFAULT_SITE, PRIVACY_LABEL, PRIVACY_URL } from '../config';
 import { getToken } from '../lib/moodle';
 import { checkSite, hostOf, normSite } from '../lib/url';
 import type { LoginScreenProps } from '../types';
@@ -110,6 +110,11 @@ export const LoginScreen = ({ site, remember: rememberInitial, message = '', onL
           {error}
         </div>
       </form>
+      <p className="hint" style={{ marginTop: 16 }}>
+        <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
+          {PRIVACY_LABEL}
+        </a>
+      </p>
       {currentSite && (
         <p className="hint" style={{ marginTop: 16 }}>
           <a href={`${currentSite}/my/courses.php`} target="_blank" rel="noopener noreferrer">

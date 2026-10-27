@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ChangeEvent, type MouseEvent, type SyntheticEvent } from 'react';
-import { REMINDER_TEXTS as T } from '../config';
+import { PRIVACY_LABEL, PRIVACY_URL, REMINDER_TEXTS as T } from '../config';
 import type { RemindersApi } from '../types';
 import { Checkbox } from './Checkbox';
 import { Disclosure } from './Disclosure';
@@ -90,6 +90,11 @@ export const RemindersDialog = ({ api, onClose }: Props) => {
           <p>{T.consentShort}</p>
           <Disclosure summary={T.moreInfo}>
             <p className="more-info-text">{T.consentDetails}</p>
+            <p className="more-info-text">
+              <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
+                {PRIVACY_LABEL}
+              </a>
+            </p>
           </Disclosure>
           <Checkbox label={T.consentCheck} checked={agreed} onChange={handleAgreeChange} />
           {needConsent && (

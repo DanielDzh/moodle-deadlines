@@ -88,6 +88,10 @@ export const LOAD_STEPS: { id: Exclude<LoadStage, 'done'>; label: string }[] = [
   { id: 'statuses', label: 'Статуси здачі' },
 ];
 
+/** The privacy page (public/privacy.html), relative to the site root so it works in a subfolder too. */
+export const PRIVACY_URL = `${import.meta.env.BASE_URL}privacy.html`;
+export const PRIVACY_LABEL = 'Політика приватності';
+
 /** Telegram reminders service (the Worker in worker/). */
 /** Overridable with VITE_REMINDERS_API_URL for local development against `wrangler dev`. */
 export const REMINDERS_API_URL: string =
