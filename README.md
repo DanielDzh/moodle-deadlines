@@ -11,9 +11,10 @@ Moodle, and by default no backend: the site talks to your Moodle straight from t
 [Telegram reminders](#telegram-reminders-optional) add a small server, only if you turn them on.
 
 <p align="center">
-  <img src="docs/screenshots/phone-login.png" width="230" alt="Sign in with your Moodle address" />
-  <img src="docs/screenshots/phone-board.png" width="230" alt="Nearest deadline and summary" />
-  <img src="docs/screenshots/phone-month.png" width="230" alt="Deadlines grouped by date" />
+  <img src="docs/screenshots/phone-login.png" width="205" alt="Sign in with your Moodle address" />
+  <img src="docs/screenshots/phone-loading.png" width="205" alt="The loader: courses, tasks and deadlines, submission statuses" />
+  <img src="docs/screenshots/phone-board.png" width="205" alt="Nearest deadline and summary" />
+  <img src="docs/screenshots/phone-month.png" width="205" alt="Deadlines grouped by date" />
 </p>
 
 ## Features
@@ -92,6 +93,11 @@ A student can link the site to a Telegram bot ([`worker/`](worker/), a Cloudflar
   after a deadline, abandoned link attempts after 10 minutes, and users who have not visited the site for 60 days, who are
   warned in the bot 7 days before and told when it happens).
 
+<p align="center">
+  <img src="docs/screenshots/phone-reminders.png" width="230" alt="The reminders dialog on a phone" />
+  <img src="docs/screenshots/desktop-reminders.png" width="60%" alt="Linking Telegram: two steps and the bot link" />
+</p>
+
 Design notes and stages: [`docs/plans/telegram-reminders.md`](docs/plans/telegram-reminders.md). Deployment:
 [`docs/deployment.md`](docs/deployment.md).
 
@@ -131,10 +137,12 @@ npm run deploy       # build + publish to <name>.<your-subdomain>.workers.dev
 ## Testing
 
 - `npm test` — unit tests for dates and Ukrainian plurals, address handling, timeline grouping and the
-  "burning" rule, and the Moodle client (token errors, deduplication, read-only calls).
-- `e2e/mock-moodle.py` — opens the built site in Chromium against a fake Moodle and walks through sign-in,
-  bands, filters, the checklist, themes, logout, an expired token and the phone layout. It also regenerates
-  the screenshots above.
+  "burning" rule, the Moodle client, the reminders sync, anonymous statistics, and the whole Worker (token
+  encryption, reminder planning, the site API, the bot, delivery, refresh, cleanup).
+- `e2e/mock-moodle.py` — opens the built site in Chromium against a fake Moodle and a mocked reminders Worker, and
+  walks through sign-in, the loader, bands, filters, the checklist, the reminders dialog, the donate link,
+  statistics events, themes, logout, an expired token and the phone layout (42 checks). It also regenerates the
+  screenshots above. Nothing in it talks to the real Worker.
 
 ```bash
 pip install playwright && playwright install chromium
