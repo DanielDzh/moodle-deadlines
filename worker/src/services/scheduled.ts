@@ -1,11 +1,13 @@
 import { cleanup } from '../db/cleanup-repo';
 import { createDeliveryRepo } from '../db/delivery-repo';
+import { createInactivityRepo } from '../db/inactivity-repo';
 import { createRefreshRepo } from '../db/refresh-repo';
 import { devSiteCheck } from '../lib/dev-site-check';
 import { parseBlockedSites } from '../lib/site-url';
 import { createTelegramClient } from '../telegram/telegram-api';
 import type { Env } from '../types';
 import { deliverReminders } from './deliver-reminders';
+import { notifyInactive } from './notify-inactive';
 import { refreshNextUser } from './refresh-user';
 
 /** Cleanup is cheap but pointless every minute. */
@@ -34,6 +36,10 @@ export const runScheduled = async (env: Env, now: number = Math.floor(Date.now()
         now,
       );
       if (outcome !== 'none') console.log('refresh', outcome);
+    }],
+    ['inactivity', async () => {
+      const report = await notifyInactive(createInactivityRepo(env.DB), telegram, env.SITE_URL, now);
+      if (report.warned || report.expired) console.log('inactivity', JSON.stringify(report));
     }],
   ];
   if (Math.floor(now / 60) % CLEANUP_EVERY_MINUTES === 0) {

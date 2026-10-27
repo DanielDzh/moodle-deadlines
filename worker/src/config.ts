@@ -18,6 +18,12 @@ export const TASK_RETENTION_DAYS = 7;
 /** After this many days without a visit to the site a subscription is considered abandoned and is deleted. */
 export const INACTIVE_USER_DAYS = 60;
 
+/** The bot warns a user this many days before the inactivity deadline. */
+export const INACTIVITY_WARN_DAYS = 7;
+
+/** Users handled per cron tick, so one tick stays small even after a long outage. */
+export const INACTIVITY_BATCH = 20;
+
 /** Limits on the data the site sends. */
 export const LIMITS = {
   maxTasks: 300,
