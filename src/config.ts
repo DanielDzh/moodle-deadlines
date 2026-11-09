@@ -176,7 +176,13 @@ export const CALENDAR_TEXTS = {
   userLabel: 'Календар',
   replace: 'Завантажити новий файл',
   /** Summary label: without submission statuses "overdue" can only mean "not ticked as done". */
-  overdue: 'прострочено й не виконано',
+  overdue: 'прострочено, перевірте здачу',
+  /** A permanent notice at the top of the board: the calendar cannot tell whether work was handed in. */
+  notice: {
+    title: 'Перевірте здачу в Moodle самі',
+    text: 'Календар не знає, чи ви вже здали роботу, тому всі завдання тут виглядають невиконаними. Перевірте в Moodle, особливо прострочені й ті, що горять, а здане позначайте галочкою.',
+    link: 'Відкрити Moodle',
+  },
   logout: 'Збережені завдання буде видалено з цього браузера. Щоб знову їх побачити, доведеться завантажити файл календаря.',
   empty: 'Тут порожньо. Виберіть інший курс або вимкніть «Приховати виконані».',
   footer:

@@ -289,6 +289,12 @@ dialog.reminders .waiting { display: flex; align-items: center; justify-content:
 .file-btn { position: relative; display: inline-flex; align-items: center; overflow: hidden; }
 .file-btn:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
 .file-btn.is-busy { opacity: .55; cursor: progress; }
+/* Calendar mode: a full-width alert bar glued to the top of the page, above the header */
+.cal-notice { background: var(--warn-bg); color: var(--warn-ink); border-bottom: 1px solid color-mix(in srgb, var(--warn-ink) 35%, transparent); }
+.cal-notice-inner { max-width: 980px; margin: 0 auto; padding: 10px 18px; padding-top: max(10px, env(safe-area-inset-top, 0px)); display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+.cal-notice strong { font-size: .95rem; }
+.cal-notice p { margin: 0; flex: 1 1 320px; font-size: .9rem; line-height: 1.45; }
+.cal-notice a { color: inherit; font-weight: 600; font-size: .9rem; white-space: nowrap; }
 
 /* First-visit reminders hint: a solid callout with an arrow under the reminders button, which pulses until the hint is closed */
 .rem-hint-anchor { position: relative; display: inline-flex; }
