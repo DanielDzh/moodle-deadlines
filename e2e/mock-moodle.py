@@ -299,6 +299,7 @@ with sync_playwright() as pw:
     check('the description is tidy', 'Links:' not in page.inner_text('.card:has-text("Есе про етику")') and '_' not in page.inner_text('.card:has-text("Есе про етику") .desc'))
     check('the calendar board carries a permanent notice to check submissions in Moodle', page.locator('aside.cal-notice').count() == 1 and 'Календар не знає' in page.inner_text('aside.cal-notice') and page.locator('aside.cal-notice strong').count() == 0 and page.locator('aside.cal-notice a[href="https://moodle.example.edu/my/courses.php"]').count() == 1 and page.locator('aside.cal-notice button').count() == 0)
     check('the notice is a full-width bar at the very top of the page', page.evaluate("(() => { const r = document.querySelector('aside.cal-notice').getBoundingClientRect(); return r.top === 0 && Math.round(r.width) === document.documentElement.clientWidth; })()"))
+    check('the notice text sits in the same column as the board', page.evaluate("(() => { const t = document.querySelector('.cal-notice-inner').getBoundingClientRect(); const w = document.querySelector('.wrap').getBoundingClientRect(); return Math.abs(t.left - w.left) < 1 && Math.abs(t.right - w.right) < 1; })()"))
     check('there is no reminders button in calendar mode', page.locator('header .btn:has-text("Нагадування")').count() == 0 and page.locator('.rem-hint-anchor').count() == 0)
     check('there is no "hide submitted" switch', page.locator('.switch:has-text("подані")').count() == 0)
     badges = page.locator('.badge').all_inner_texts()
