@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { DATA_VERSION, DEFAULT_SITE, KEYS, LOADER } from './config';
+import { CALENDAR_SOURCE, DATA_VERSION, DEFAULT_SITE, KEYS, LOADER } from './config';
 import { BoardView } from './components/BoardView';
 import { LoginScreen } from './components/LoginScreen';
 import { LogoutDialog } from './components/LogoutDialog';
@@ -36,15 +36,18 @@ export function App() {
   const [remember, setRemember] = useState(() => local.get<boolean>(KEYS.remember, true) !== false);
   const [snapshot, setSnapshot] = useState<Snapshot | null>(initialSnapshot);
   const [progress, setProgress] = useState<LoadProgress | null>(null);
-  const [loader, setLoader] = useState(true);
+  // A saved calendar file needs no fetch, so there is no loader for it.
+  const [loader, setLoader] = useState(() => snapshot?.source !== CALENDAR_SOURCE);
   const [error, setError] = useState('');
   const [loginMessage, setLoginMessage] = useState('');
   const [confirmingLogout, setConfirmingLogout] = useState(false);
   const [theme, setTheme] = useStoredState<Theme>(KEYS.theme, 'auto');
   const reminders = useReminders({ site, token });
+  /** Signed in with a calendar export file: there is a snapshot but no token, and nothing to refresh from the network. */
+  const calendarMode = snapshot?.source === CALENDAR_SOURCE;
   const busy = useRef(false);
   const [leaving, setLeaving] = useState(false);
-  const loaderRef = useRef(true);
+  const loaderRef = useRef(loader);
 
   const setLoaderOn = useCallback((on: boolean) => {
     loaderRef.current = on;
@@ -123,12 +126,28 @@ export function App() {
     setToken(s.token);
   }, [setLoaderOn]);
 
+  const onCalendarLoaded = useCallback(
+    (data: Snapshot, rememberChoice: boolean) => {
+      track('login');
+      wipeSecrets();
+      local.set(KEYS.remember, rememberChoice);
+      saveSecret(KEYS.data, data, rememberChoice);
+      setRemember(rememberChoice);
+      setToken('');
+      setSnapshot(sanitizeSnapshot(data));
+      setError('');
+      setLoginMessage('');
+      setLoaderOn(false);
+    },
+    [setLoaderOn],
+  );
+
   const nextTheme = useCallback(
     () => setTheme((t) => (t === 'auto' ? 'light' : t === 'light' ? 'dark' : 'auto')),
     [setTheme],
   );
 
-  if (!token) {
+  if (!token && !calendarMode) {
     return <LoginScreen
         site={site}
         remember={remember}
@@ -136,6 +155,7 @@ export function App() {
         theme={theme}
         onNextTheme={nextTheme}
         onLoggedIn={onLoggedIn}
+        onCalendarLoaded={onCalendarLoaded}
       />;
   }
 
@@ -164,6 +184,8 @@ export function App() {
         onNextTheme={nextTheme}
         onLogout={openLogout}
         reminders={reminders}
+        remember={remember}
+        onCalendarLoaded={onCalendarLoaded}
       />
     );
   } else if (error) {
@@ -181,7 +203,7 @@ export function App() {
   return (
     <>
       {screen}
-      {confirmingLogout && <LogoutDialog remindersOn={remindersOn} onConfirm={handleLogoutConfirm} onClose={closeLogout} />}
+      {confirmingLogout && <LogoutDialog remindersOn={remindersOn} calendar={calendarMode} onConfirm={handleLogoutConfirm} onClose={closeLogout} />}
     </>
   );
 }

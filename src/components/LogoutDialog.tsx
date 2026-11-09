@@ -1,15 +1,17 @@
 import { useEffect, useRef, type MouseEvent } from 'react';
-import { REMINDER_TEXTS } from '../config';
+import { CALENDAR_TEXTS, REMINDER_TEXTS } from '../config';
 
 interface Props {
   /** Telegram reminders are on or being linked: logging out also turns them off. */
   remindersOn: boolean;
+  /** The tasks come from a calendar file: there is no token, so only the saved tasks are removed. */
+  calendar: boolean;
   onConfirm: () => void;
   onClose: () => void;
 }
 
 /** Logout confirmation. Esc and a click outside the dialog only close it. */
-export function LogoutDialog({ remindersOn, onConfirm, onClose }: Props) {
+export function LogoutDialog({ remindersOn, calendar, onConfirm, onClose }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   // Callbacks via ref: the dialog opens once even if the page re-renders during a data refresh.
   const actions = useRef({ onConfirm, onClose });
@@ -51,8 +53,9 @@ export function LogoutDialog({ remindersOn, onConfirm, onClose }: Props) {
     >
       <h2 id="logoutTitle">Вийти з акаунта?</h2>
       <p>
-        Токен доступу і збережені завдання буде видалено з цього браузера. Щоб знову побачити завдання, доведеться
-        ввести логін і пароль.
+        {calendar
+          ? CALENDAR_TEXTS.logout
+          : 'Токен доступу і збережені завдання буде видалено з цього браузера. Щоб знову побачити завдання, доведеться ввести логін і пароль.'}
       </p>
       <p>Позначки «виконано» лишаться.</p>
       {remindersOn && <p className="warn-note">{REMINDER_TEXTS.logoutNote}</p>}

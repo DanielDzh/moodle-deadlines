@@ -275,6 +275,26 @@ dialog.reminders .open-bot { display: flex; justify-content: center; width: 100%
 dialog.reminders .waiting { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 14px 0 4px; color: var(--muted); font-size: .92rem; }
 .pending-hint { margin: 0; text-align: center; color: var(--muted); font-size: .84rem; }
 
+/* Calendar sign-in: the switch between the two ways, the file drop area and the "new file" button */
+.mode-switch { display: flex; gap: 4px; padding: 4px; margin-bottom: 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 999px; }
+.mode-switch button { flex: 1; border: 0; background: transparent; color: var(--muted); padding: 8px 12px; border-radius: 999px; font: inherit; font-weight: 600; font-size: .9rem; cursor: pointer; transition: background-color .28s cubic-bezier(.22, 1, .36, 1), color .28s cubic-bezier(.22, 1, .36, 1); }
+.mode-switch button:hover { color: var(--ink); }
+.mode-switch button[aria-selected="true"] { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); color: var(--ink); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent); }
+.cal-steps { margin: 0; padding-left: 1.3em; display: flex; flex-direction: column; gap: 8px; font-size: .92rem; }
+.panel label.dropzone { position: relative; align-items: center; gap: 6px; padding: 22px 14px; border: 2px dashed var(--line); border-radius: 14px; text-align: center; cursor: pointer; transition: border-color .28s cubic-bezier(.22, 1, .36, 1), background-color .28s cubic-bezier(.22, 1, .36, 1); }
+.panel label.dropzone:hover, .panel label.dropzone.is-over { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+.panel label.dropzone:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.dropzone .drop-or { color: var(--muted); font-weight: 500; font-size: .86rem; }
+.panel .dropzone input, .file-btn input { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; opacity: 0; cursor: pointer; }
+.file-btn { position: relative; display: inline-flex; align-items: center; overflow: hidden; }
+.file-btn:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.file-btn.is-busy { opacity: .55; cursor: progress; }
+/* Calendar mode: an alert bar glued to the top of the page; the bar is full width, its text sits in the same column as the board */
+.cal-notice { background: var(--warn-bg); color: var(--warn-ink); border-bottom: 1px solid color-mix(in srgb, var(--warn-ink) 35%, transparent); }
+.cal-notice-inner { max-width: 980px; margin: 0 auto; padding: 10px 18px; padding-top: max(10px, env(safe-area-inset-top, 0px)); display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 12px; }
+.cal-notice p { margin: 0; flex: 1 1 320px; font-size: .92rem; line-height: 1.45; }
+.cal-notice a { color: inherit; font-weight: 600; font-size: .9rem; white-space: nowrap; }
+
 /* First-visit reminders hint: a solid callout with an arrow under the reminders button, which pulses until the hint is closed */
 .rem-hint-anchor { position: relative; display: inline-flex; }
 .rem-hint-anchor.has-rem-hint::before { content: ''; position: absolute; top: calc(100% + 5px); left: 50%; z-index: 5; width: 14px; height: 14px; border-radius: 2px; background: var(--accent); transform: translateX(-50%) rotate(45deg); animation: rem-hint-fade .45s ease; }
@@ -289,5 +309,5 @@ dialog.reminders .waiting { display: flex; align-items: center; justify-content:
 @keyframes rem-hint-ping { 0% { transform: scale(1); opacity: .8; } 100% { transform: scale(1.18, 1.5); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .rem-hint, .rem-hint-anchor.has-rem-hint::before, .rem-hint-anchor.has-rem-hint::after { animation: none; }
-  .rem-hint-close { transition: none; }
+  .rem-hint-close, .mode-switch button, .panel label.dropzone { transition: none; }
 }

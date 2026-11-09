@@ -1,5 +1,5 @@
 import type { ChangeEvent, CSSProperties } from 'react';
-import { KIND_LABEL } from '../config';
+import { CALENDAR_KIND, KIND_LABEL } from '../config';
 import { fmtDateTime, fmtDayLong, fmtTime } from '../lib/dates';
 import { shortText } from '../lib/text';
 import type { Course, DecoratedTask } from '../types';
@@ -17,7 +17,7 @@ function StatusBadges({ task, burning }: { task: DecoratedTask; burning: boolean
   const badges: { text: string; tone?: 'ok' | 'warn' | 'bad' | 'fire' }[] = [];
   if (burning) badges.push({ text: '🔥 Горить', tone: 'fire' });
   if (KIND_LABEL[task.kind]) badges.push({ text: KIND_LABEL[task.kind] });
-  else if (task.kind !== 'assign') badges.push({ text: 'Активність' });
+  else if (task.kind !== 'assign' && task.kind !== CALENDAR_KIND) badges.push({ text: 'Активність' });
 
   if (task.kind === 'assign') {
     switch (task.status) {

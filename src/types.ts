@@ -41,6 +41,19 @@ export interface Snapshot {
   user: string;
   courses: Course[];
   items: Task[];
+  /** 'ical' when the tasks come from a calendar export file (no token, no submission statuses). Absent for Moodle login. */
+  source?: 'ical';
+}
+
+/** One VEVENT of an iCalendar file, reduced to what the site needs. */
+export interface IcalEvent {
+  uid: string;
+  summary: string;
+  description: string;
+  /** Start of the event in Unix seconds (for a Moodle deadline this is the deadline); null when it could not be read. */
+  start: number | null;
+  categories: string[];
+  url: string;
 }
 
 /** Stage of loading data from Moodle. 'done' — everything loaded. */
@@ -74,6 +87,9 @@ export interface LoginSession {
   remember: boolean;
 }
 
+/** The two ways to sign in: Moodle login and password, or a calendar export file. */
+export type LoginMode = 'password' | 'calendar';
+
 export interface LoginScreenProps {
   site: string;
   remember: boolean;
@@ -81,6 +97,14 @@ export interface LoginScreenProps {
   theme: Theme;
   onNextTheme: () => void;
   onLoggedIn: (session: LoginSession) => void;
+  /** A calendar export file was read: the snapshot is ready, no Moodle login is involved. */
+  onCalendarLoaded: (snapshot: Snapshot, remember: boolean) => void;
+}
+
+export interface CalendarImportProps {
+  /** Initial state of the "remember on this device" switch. */
+  remember: boolean;
+  onLoaded: (snapshot: Snapshot, remember: boolean) => void;
 }
 
 /** Link state of the Telegram reminders as the site sees it. */

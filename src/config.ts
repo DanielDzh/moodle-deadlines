@@ -118,6 +118,76 @@ export const REMINDERS = {
   keyBytes: 32,
 } as const;
 
+/** Task kind of events that come from a calendar export file: no module type and no submission status. */
+export const CALENDAR_KIND = 'ical';
+
+/** Value of `Snapshot.source` for data that comes from a calendar export file. */
+export const CALENDAR_SOURCE = 'ical';
+
+/** Reading a calendar export file (.ics). */
+export const CALENDAR = {
+  /** The file picker offers calendar files only. */
+  accept: '.ics,text/calendar',
+  /** Larger files are refused before they are read, bytes. */
+  maxFileBytes: 2 * 1024 * 1024,
+  /** A task description is cut to this many characters. */
+  introMaxChars: 2000,
+  /** The raw description is cut to this many characters before any cleaning, so a hostile file cannot make the cleaning slow. */
+  maxDescriptionChars: 20_000,
+  /** Longest activity link that is searched for in a description, characters. */
+  maxLinkChars: 300,
+  /** Moodle's calendar day page: the link for an event whose description has no link. The deadline time is appended. */
+  dayViewPath: '/calendar/view.php?view=day&time=',
+  /**
+   * Moodle (Ukrainian) names a deadline event "Строк <name> спливає", i.e. "<name> is due".
+   * These parts are removed from task names; on another language the full text is shown.
+   */
+  namePrefixes: ['Строк '],
+  nameSuffixes: [' спливає'],
+} as const;
+
+/** Text of the calendar sign-in and of the board in calendar mode (UI text, Ukrainian). */
+export const CALENDAR_TEXTS = {
+  tabPassword: 'Логін і пароль',
+  tabCalendar: 'Через календар',
+  tabsLabel: 'Спосіб входу',
+  intro: 'Без логіна й пароля: завантажте файл календаря, який експортує ваш Moodle.',
+  steps: [
+    'У Moodle відкрийте Календар → «Імпорт чи експорт календарів» → «Експортувати календар».',
+    'Виберіть усі події й найширший період, який пропонує Moodle (власний діапазон на весь навчальний рік). Вузький період сховає частину дедлайнів.',
+    'Натисніть кнопку експорту: браузер завантажить файл .ics. Виберіть його нижче.',
+  ],
+  pick: 'Вибрати файл .ics',
+  drop: 'або перетягніть його сюди',
+  reading: 'Читаю файл…',
+  remember: 'Запам’ятати на цьому пристрої',
+  privacy: 'Файл читається лише у вашому браузері й нікуди не надсилається. Паролі й токени не потрібні.',
+  limits:
+    'У календарі немає статусу «подано», тому позначайте виконане вручну. Нагадування в Telegram працюють лише при вході з логіном і паролем.',
+  errors: {
+    tooBig: 'Файл завеликий для календаря. Експортуйте вужчий період.',
+    read: 'Не вдалося прочитати файл. Спробуйте ще раз.',
+    notCalendar: 'Це не схоже на файл календаря (.ics). Експортуйте календар із Moodle і виберіть завантажений файл.',
+    empty: 'У файлі не знайшлося подій із датою. Перевірте період і тип подій під час експорту.',
+  },
+  /** Used in place of a course when an event has no category. */
+  noCourse: 'Без курсу',
+  /** Prefix of the line under the brand name. */
+  userLabel: 'Календар',
+  replace: 'Завантажити новий файл',
+  /** Summary label: without submission statuses "overdue" can only mean "not ticked as done". */
+  overdue: 'прострочено, перевірте здачу',
+  /** A permanent notice at the top of the board: the calendar cannot tell whether work was handed in. */
+  notice: {
+    text: 'Календар не знає, чи ви вже здали роботу, тому всі завдання тут виглядають невиконаними. Перевірте в Moodle, особливо прострочені й ті, що горять, а здане позначайте галочкою.',
+    link: 'Відкрити Moodle',
+  },
+  logout: 'Збережені завдання буде видалено з цього браузера. Щоб знову їх побачити, доведеться завантажити файл календаря.',
+  empty: 'Тут порожньо. Виберіть інший курс або вимкніть «Приховати виконані».',
+  footer:
+    'Дані взято з файлу календаря, завантаженого {date}. Щоб оновити, завантажте новий файл. Позначки «виконано» зберігаються лише в цьому браузері.',
+} as const;
+
 /** Label of the theme button for each theme (UI text, Ukrainian). */
 export const THEME_LABEL = {
   auto: 'Тема: як у системі',

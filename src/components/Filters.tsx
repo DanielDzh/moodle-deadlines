@@ -8,6 +8,8 @@ interface Props {
   open: boolean;
   onToggleOpen: () => void;
   onToggleCourse: (id: number | 'all') => void;
+  /** False when no task has a submission status (calendar mode): the switch would do nothing. */
+  canHideSubmitted: boolean;
   hideSubmitted: boolean;
   onHideSubmitted: (v: boolean) => void;
   hideDone: boolean;
@@ -40,10 +42,12 @@ export function Filters(p: Props) {
           </button>
         )}
         <div className="toggles">
-          <label className="switch">
-            <input type="checkbox" checked={p.hideSubmitted} onChange={(e) => p.onHideSubmitted(e.target.checked)} />
-            <span>Приховати подані</span>
-          </label>
+          {p.canHideSubmitted && (
+            <label className="switch">
+              <input type="checkbox" checked={p.hideSubmitted} onChange={(e) => p.onHideSubmitted(e.target.checked)} />
+              <span>Приховати подані</span>
+            </label>
+          )}
           <label className="switch">
             <input type="checkbox" checked={p.hideDone} onChange={(e) => p.onHideDone(e.target.checked)} />
             <span>Приховати виконані</span>
