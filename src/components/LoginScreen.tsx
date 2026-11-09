@@ -1,8 +1,9 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
-import { DEFAULT_SITE, PRIVACY_LABEL, PRIVACY_URL, THEME_LABEL } from '../config';
+import { CALENDAR_TEXTS, DEFAULT_SITE, PRIVACY_LABEL, PRIVACY_URL, THEME_LABEL } from '../config';
 import { getToken } from '../lib/moodle';
 import { checkSite, hostOf, normSite } from '../lib/url';
-import type { LoginScreenProps } from '../types';
+import type { LoginMode, LoginScreenProps } from '../types';
+import { CalendarImport } from './CalendarImport';
 import { Checkbox } from './Checkbox';
 import { Disclosure } from './Disclosure';
 
@@ -19,13 +20,24 @@ const offerToSavePassword = async (user: string, pass: string) => {
   }
 };
 
-export const LoginScreen = ({ site, remember: rememberInitial, message = '', theme, onNextTheme, onLoggedIn }: LoginScreenProps) => {
+export const LoginScreen = ({
+  site,
+  remember: rememberInitial,
+  message = '',
+  theme,
+  onNextTheme,
+  onLoggedIn,
+  onCalendarLoaded,
+}: LoginScreenProps) => {
+  const [mode, setMode] = useState<LoginMode>('password');
   const [error, setError] = useState(message);
   const [busy, setBusy] = useState(false);
   const [siteInput, setSiteInput] = useState(site);
   const currentSite = normSite(siteInput);
 
   const handleSiteChange = (e: ChangeEvent<HTMLInputElement>) => setSiteInput(e.target.value);
+  const handleModePassword = () => setMode('password');
+  const handleModeCalendar = () => setMode('calendar');
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -66,55 +78,67 @@ export const LoginScreen = ({ site, remember: rememberInitial, message = '', the
         </button>
       </div>
       <p className="lead">Усі завдання з вашого Moodle на одній сторінці, від найтерміновішого до найдальшого.</p>
-      <form className="panel" method="post" action="#" autoComplete="on" noValidate onSubmit={handleSubmit}>
-        <p className="warn-note">
-          Логін і пароль підуть на {currentSite ? hostOf(currentSite) : 'вказаний нижче Moodle'}. Вводьте лише дані
-          Moodle, де справді навчаєтесь.
-        </p>
-        <label>
-          Логін Moodle
-          <input name="username" id="username" autoComplete="username" autoCapitalize="off" spellCheck={false} />
-        </label>
-        <label>
-          Пароль
-          <input name="password" id="password" type="password" autoComplete="current-password" />
-        </label>
-        <Checkbox name="remember" defaultChecked={rememberInitial} label="Запам’ятати на цьому пристрої" />
-        <button className="btn primary" type="submit" disabled={busy}>
-          {busy ? 'Входжу…' : 'Увійти й завантажити завдання'}
+      <div className="mode-switch" role="tablist" aria-label={CALENDAR_TEXTS.tabsLabel}>
+        <button type="button" role="tab" aria-selected={mode === 'password'} onClick={handleModePassword}>
+          {CALENDAR_TEXTS.tabPassword}
         </button>
-        <p className="hint">
-          Пароль іде напряму в Moodle і ніде не зберігається. На пристрої лишається тільки токен доступу, як у
-          мобільного застосунку Moodle. На чужому комп’ютері зніміть «Запам’ятати»: тоді токен зникне, щойно ви
-          закриєте вкладку.
-        </p>
-        <Disclosure summary="Інший Moodle або вхід через Google" defaultOpen={normSite(site) !== DEFAULT_SITE}>
-          <label>
-            Адреса вашого Moodle
-            <input
-              name="site"
-              value={siteInput}
-              onChange={handleSiteChange}
-              placeholder="moodle.university.edu.ua"
-              inputMode="url"
-              autoComplete="url"
-              autoCapitalize="off"
-              spellCheck={false}
-            />
-          </label>
-          <p className="hint">
-            Скопіюйте з адресного рядка, коли відкриваєте Moodle свого навчального закладу. Можна вставити посилання
-            на будь-яку його сторінку.
+        <button type="button" role="tab" aria-selected={mode === 'calendar'} onClick={handleModeCalendar}>
+          {CALENDAR_TEXTS.tabCalendar}
+        </button>
+      </div>
+      {mode === 'calendar' ? (
+        <CalendarImport remember={rememberInitial} onLoaded={onCalendarLoaded} />
+      ) : (
+        <form className="panel" method="post" action="#" autoComplete="on" noValidate role="tabpanel" onSubmit={handleSubmit}>
+          <p className="warn-note">
+            Логін і пароль підуть на {currentSite ? hostOf(currentSite) : 'вказаний нижче Moodle'}. Вводьте лише дані
+            Moodle, де справді навчаєтесь.
           </p>
           <label>
-            Токен (якщо входите через Google чи інший зовнішній сервіс)
-            <input name="token" autoComplete="off" spellCheck={false} />
+            Логін Moodle
+            <input name="username" id="username" autoComplete="username" autoCapitalize="off" spellCheck={false} />
           </label>
-        </Disclosure>
-        <div className="error" role="alert">
-          {error}
-        </div>
-      </form>
+          <label>
+            Пароль
+            <input name="password" id="password" type="password" autoComplete="current-password" />
+          </label>
+          <Checkbox name="remember" defaultChecked={rememberInitial} label="Запам’ятати на цьому пристрої" />
+          <button className="btn primary" type="submit" disabled={busy}>
+            {busy ? 'Входжу…' : 'Увійти й завантажити завдання'}
+          </button>
+          <p className="hint">
+            Пароль іде напряму в Moodle і ніде не зберігається. На пристрої лишається тільки токен доступу, як у
+            мобільного застосунку Moodle. На чужому комп’ютері зніміть «Запам’ятати»: тоді токен зникне, щойно ви
+            закриєте вкладку.
+          </p>
+          <Disclosure summary="Інший Moodle або вхід через Google" defaultOpen={normSite(site) !== DEFAULT_SITE}>
+            <label>
+              Адреса вашого Moodle
+              <input
+                name="site"
+                value={siteInput}
+                onChange={handleSiteChange}
+                placeholder="moodle.university.edu.ua"
+                inputMode="url"
+                autoComplete="url"
+                autoCapitalize="off"
+                spellCheck={false}
+              />
+            </label>
+            <p className="hint">
+              Скопіюйте з адресного рядка, коли відкриваєте Moodle свого навчального закладу. Можна вставити посилання
+              на будь-яку його сторінку.
+            </p>
+            <label>
+              Токен (якщо входите через Google чи інший зовнішній сервіс)
+              <input name="token" autoComplete="off" spellCheck={false} />
+            </label>
+          </Disclosure>
+          <div className="error" role="alert">
+            {error}
+          </div>
+        </form>
+      )}
       <p className="hint" style={{ marginTop: 16 }}>
         <a href={PRIVACY_URL} target="_blank" rel="noopener noreferrer">
           {PRIVACY_LABEL}

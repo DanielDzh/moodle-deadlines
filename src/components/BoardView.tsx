@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BURN_DAYS, KEYS, REMINDER_TEXTS, THEME_LABEL } from '../config';
+import { BURN_DAYS, CALENDAR_SOURCE, CALENDAR_TEXTS, KEYS, REMINDER_TEXTS, THEME_LABEL } from '../config';
+import { useCalendarFile } from '../hooks/useCalendarFile';
 import { useStoredState } from '../hooks/useStoredState';
 import { useMinute } from '../hooks/useMinute';
 import { track } from '../lib/analytics';
@@ -8,6 +9,7 @@ import { buildBoard } from '../lib/board';
 import { fmtDateTime, fmtDayLong } from '../lib/dates';
 import type { Course, RemindersApi, Snapshot, Theme } from '../types';
 import { BandSection } from './BandSection';
+import { CalendarFileButton } from './CalendarFileButton';
 import { DonateLink } from './DonateLink';
 import { Filters } from './Filters';
 import { RemindersDialog } from './RemindersDialog';
@@ -21,6 +23,9 @@ interface Props {
   onNextTheme: () => void;
   onLogout: () => void;
   reminders: RemindersApi;
+  /** Where a calendar file's data is kept (the "remember" choice) and what to do with a newly chosen file. */
+  remember: boolean;
+  onCalendarLoaded: (snapshot: Snapshot, remember: boolean) => void;
 }
 
 /** The "burning" threshold can be changed temporarily in the URL: ?burnDays=7 — handy to preview the effect. */
@@ -35,8 +40,11 @@ function burnDaysFromUrl(): number {
   return BURN_DAYS;
 }
 
-export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, reminders }: Props) {
+export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, reminders, remember, onCalendarLoaded }: Props) {
   const minute = useMinute();
+  /** The tasks come from a calendar file: no submission statuses, no reminders, refresh means choosing a new file. */
+  const calendar = snapshot.source === CALENDAR_SOURCE;
+  const calendarFile = useCalendarFile(remember, onCalendarLoaded);
   const [done, setDone] = useStoredState<Record<string, boolean>>(KEYS.done, {});
   const [hideDone, setHideDone] = useStoredState(KEYS.hideDone, false);
   const [hideSubmitted, setHideSubmitted] = useStoredState(KEYS.hideSubmitted, true);
@@ -63,8 +71,9 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, remin
   }, [remoteDone, setDone]);
 
   useEffect(() => {
-    syncSoon(snapshot, done);
-  }, [syncSoon, remindersState, snapshot, done]);
+    // A calendar session never talks to the reminders service, even if an earlier session left it in the "active" state.
+    if (!calendar) syncSoon(snapshot, done);
+  }, [syncSoon, remindersState, snapshot, done, calendar]);
 
   const board = useMemo(
     () => buildBoard(snapshot, { done, filter, hideDone, hideSubmitted, burnDays }),
@@ -94,7 +103,9 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, remin
   );
 
   const emptyText = board.all.length
-    ? 'Тут порожньо. Виберіть інший курс або вимкніть «Приховати подані» чи «Приховати виконані».'
+    ? calendar
+      ? CALENDAR_TEXTS.empty
+      : 'Тут порожньо. Виберіть інший курс або вимкніть «Приховати подані» чи «Приховати виконані».'
     : 'У поточних курсах не знайшлося завдань, форумів чи тестів.';
 
   return (
@@ -106,12 +117,16 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, remin
         </div>
         <div className="actions">
           <DonateLink variant="icon" />
-          <span className={showHint ? 'rem-hint-anchor has-rem-hint' : 'rem-hint-anchor'}>
-            <button type="button" className="btn ghost" onClick={openReminders}>
-              🔔 {remindersState === 'active' ? REMINDER_TEXTS.buttonActive : REMINDER_TEXTS.button}
-            </button>
-            {showHint && <RemindersHint onDismiss={dismissHint} />}
-          </span>
+          {calendar ? (
+            <CalendarFileButton label={CALENDAR_TEXTS.replace} busy={calendarFile.busy} onFile={calendarFile.load} />
+          ) : (
+            <span className={showHint ? 'rem-hint-anchor has-rem-hint' : 'rem-hint-anchor'}>
+              <button type="button" className="btn ghost" onClick={openReminders}>
+                🔔 {remindersState === 'active' ? REMINDER_TEXTS.buttonActive : REMINDER_TEXTS.button}
+              </button>
+              {showHint && <RemindersHint onDismiss={dismissHint} />}
+            </span>
+          )}
           <button type="button" className="btn ghost" onClick={onNextTheme}>
             {THEME_LABEL[theme]}
           </button>
@@ -121,13 +136,19 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, remin
         </div>
       </header>
 
+      {calendarFile.error && (
+        <div className="error banner" role="alert">
+          {calendarFile.error}
+        </div>
+      )}
+
       {error && (
         <div className="error banner" role="alert">
           Не вдалося оновити: {error} Показано дані з попереднього завантаження.
         </div>
       )}
 
-      <Summary board={board} courses={courses} />
+      <Summary board={board} courses={courses} calendar={calendar} />
 
       <Filters
         board={board}
@@ -135,6 +156,7 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, remin
         open={chipsOpen}
         onToggleOpen={() => setChipsOpen((v) => !v)}
         onToggleCourse={toggleCourse}
+        canHideSubmitted={!calendar}
         hideSubmitted={hideSubmitted}
         onHideSubmitted={setHideSubmitted}
         hideDone={hideDone}
@@ -150,16 +172,22 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, remin
       )}
 
       <footer>
-        <p>
-          Дані зібрано {fmtDateTime(snapshot.collectedAt)} і оновлюються щоразу, коли ви відкриваєте чи
-          перезавантажуєте сторінку. Дні до здачі рахуються від сьогоднішньої дати.
-        </p>
-        <p>
-          Показано лише поточні курси. Кінець семестру: {fmtDayLong(board.semEnd)}. Позначки «виконано» зберігаються
-          лише в цьому браузері.
-        </p>
+        {calendar ? (
+          <p>{CALENDAR_TEXTS.footer.replace('{date}', fmtDateTime(snapshot.collectedAt))}</p>
+        ) : (
+          <>
+            <p>
+              Дані зібрано {fmtDateTime(snapshot.collectedAt)} і оновлюються щоразу, коли ви відкриваєте чи
+              перезавантажуєте сторінку. Дні до здачі рахуються від сьогоднішньої дати.
+            </p>
+            <p>
+              Показано лише поточні курси. Кінець семестру: {fmtDayLong(board.semEnd)}. Позначки «виконано» зберігаються
+              лише в цьому браузері.
+            </p>
+          </>
+        )}
       </footer>
-      {remindersOpen && <RemindersDialog api={reminders} onClose={closeReminders} />}
+      {remindersOpen && !calendar && <RemindersDialog api={reminders} onClose={closeReminders} />}
     </div>
   );
 }

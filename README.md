@@ -34,6 +34,9 @@ Moodle, and by default no backend: the site talks to your Moodle straight from t
 - **Light and dark themes**, built mobile-first, installable to the home screen.
 - **Any Moodle.** Paste the address of any page of your Moodle; a link like `?site=moodle.uni.edu` pre-fills it.
 - **Telegram reminders** (optional): a bot messages you 24 h and 3 h before an unsubmitted deadline, even when you do not open the site.
+- **Sign in without a password** (optional): export the calendar from Moodle (*Calendar → Import or export calendars → Export calendar*)
+  and drop the `.ics` file on the site. It is read only in your browser. A calendar has no submission status, so tick finished
+  work yourself, and Telegram reminders need the regular sign-in.
 
 <p align="center">
   <img src="docs/screenshots/desktop-board.png" width="49%" alt="Desktop — overdue and this week" />
@@ -59,6 +62,10 @@ Browser ──► /login/token.php        login + password → token (same as th
 By default the site is fully static. All requests go straight from the student's browser to their Moodle — there is no
 server in between that could see a password or a token. Only if a student turns on Telegram reminders does a Worker
 store their token (see below).
+
+A calendar export file is an alternative that needs no Moodle request at all: `src/lib/ical.ts` reads the `.ics` text in the
+browser and `src/lib/ical-snapshot.ts` turns its events into the same data the board uses (the event's course comes from
+`CATEGORIES`, the deadline from `DTSTART`, the task page from the first activity link in the description).
 
 ## Privacy & security
 

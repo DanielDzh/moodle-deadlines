@@ -6,10 +6,11 @@ E2E check of the built site against a mocked Moodle (no real Moodle needed).
     TZ=Europe/Kyiv python e2e/mock-moodle.py dist docs/screenshots
 
 Checks login, the loader, bands, "burning", filters, ticks, theme, logout, the reminders dialog, anonymous
-statistics events, the phone layout, and refreshes the README screenshots along the way.
+statistics events, sign-in through a calendar export file, the phone layout, and refreshes the README screenshots
+along the way.
 The reminders Worker is mocked inside the test: nothing here talks to the real service.
 """
-import json, sys, time, threading, functools, http.server, datetime as dt
+import json, os, sys, tempfile, time, threading, functools, http.server, datetime as dt
 from urllib.parse import parse_qs
 from playwright.sync_api import sync_playwright
 
@@ -80,8 +81,11 @@ def ws(fn, form):
         return {'lastattempt': {'submission': {'status': st}, 'gradingstatus': 'notgraded'}}
     return {'exception': 'x', 'errorcode': 'invalidfunction', 'message': fn}
 
+site_requests = []            # every request that reached the mocked Moodle
+
 def handle(route, request):
     url = request.url
+    site_requests.append(url)
     hdr = {'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json'}
     form = parse_qs(request.post_data or '')
     if url.endswith('/login/token.php'):
@@ -249,6 +253,75 @@ with sync_playwright() as pw:
     check('the privacy page is linked from the login screen', page.locator('a[href$="privacy.html"]').count() == 1)
     check('the token is removed after logout', page.evaluate("localStorage.getItem('md.token')") is None)
     check('ticks remain after logout', page.evaluate("localStorage.getItem('md.done')") is not None)
+
+    # 6b. Sign-in through a calendar export file: no Moodle request, no token, no reminders
+    def stamp(days):
+        return (dt.datetime.now(dt.timezone.utc) + dt.timedelta(days=days)).strftime('%Y%m%dT215900Z')
+    def vevent(uid, name, days, course, description):
+        return ['BEGIN:VEVENT', f'UID:{uid}@moodle.example.edu', f'SUMMARY:Строк {name} спливає', f'DESCRIPTION:{description}',
+                'CLASS:PUBLIC', f'DTSTART:{stamp(days)}', f'DTEND:{stamp(days)}', f'CATEGORIES:{course}', 'END:VEVENT']
+    def ics(*events):
+        return '\r\n'.join(['BEGIN:VCALENDAR', 'VERSION:2.0', *[line for e in events for line in e], 'END:VCALENDAR', '']).encode('utf-8')
+    tmp = tempfile.mkdtemp()
+    def write(name, data):
+        path = os.path.join(tmp, name)
+        with open(path, 'wb') as f:
+            f.write(data)
+        return path
+    cal_main = write('export.ics', ics(
+        vevent(1, 'Есе про етику', -1, 'Етика БМЛ-26\\, ПХК-26', 'Подайте файл.\\n\\n_ТЕМИ_\\n\\n\t*\\nПерша те\r\n\tма\\n\\nLinks:\\n------\\n[1] https://moodle.example.edu/mod/assign/view.php?id=11\\n'),
+        vevent(2, 'Читання розділу 3', 1, 'Етика БМЛ-26\\, ПХК-26', 'Прочитати розділ.\\n'),
+        vevent(3, 'Звіт з логіки', 4, 'Логіка', 'Короткий звіт.\\n'),
+    ))
+    cal_one = write('one.ics', ics(vevent(9, 'Новий звіт', 2, 'Нова дисципліна', 'Опис.\\n')))
+    cal_bad = write('page.ics', '<html>Invalid authentication</html>'.encode('utf-8'))
+    cal_empty = write('empty.ics', b'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nEND:VCALENDAR\r\n')
+    n_calls, n_worker, n_site = len(calls), len(worker_calls), len(site_requests)
+
+    page.click('button[role=tab]:has-text("Через календар")')
+    check('the calendar tab replaces the password form', page.locator('form.panel').count() == 0 and page.locator('.dropzone input[type=file]').count() == 1)
+    check('the selected tab is marked', page.get_attribute('button[role=tab]:has-text("Через календар")', 'aria-selected') == 'true')
+    page.set_input_files('.dropzone input[type=file]', cal_bad)
+    page.wait_for_selector('.error:has-text("Це не схоже")')
+    check('a file that is not a calendar is refused with an explanation', True)
+    page.set_input_files('.dropzone input[type=file]', cal_empty)
+    page.wait_for_selector('.error:has-text("не знайшлося подій")')
+    check('a calendar without events is refused with an explanation', True)
+    page.set_input_files('.dropzone input[type=file]', cal_main)
+    page.wait_for_selector('.hero')
+    check('the board opens from the file', page.locator('.card').count() == 3 and page.inner_text('.who').startswith('Календар'))
+    names = page.locator('.card h3').all_inner_texts()
+    check(f'event names are cleaned {names}', set(names) == {'Есе про етику', 'Читання розділу 3', 'Звіт з логіки'})
+    check('the two courses of the file are the two chips', page.evaluate("new Set([...document.querySelectorAll('.card .course')].map(e => e.textContent.trim())).size") == 2)
+    check('the escaped comma stays inside the course name', page.locator('.card .course:has-text("Етика БМЛ-26, ПХК-26")').count() == 2)
+    check('the activity link from the description is used', page.get_attribute('.card:has-text("Есе про етику") h3 a', 'href') == 'https://moodle.example.edu/mod/assign/view.php?id=11')
+    check('the description is tidy', 'Links:' not in page.inner_text('.card:has-text("Есе про етику")') and '_' not in page.inner_text('.card:has-text("Есе про етику") .desc'))
+    check('there is no reminders button in calendar mode', page.locator('header .btn:has-text("Нагадування")').count() == 0 and page.locator('.rem-hint-anchor').count() == 0)
+    check('there is no "hide submitted" switch', page.locator('.switch:has-text("подані")').count() == 0)
+    badges = page.locator('.badge').all_inner_texts()
+    check(f'no submission or kind badges {badges}', not {'Не подано', 'Статус невідомий', 'Активність', 'Подано'} & set(badges))
+    check('the summary does not claim "not submitted"', 'не подано' not in page.inner_text('.hero'))
+    check('no token is stored for a calendar session', page.evaluate("localStorage.getItem('md.token')") is None)
+    check('the saved data is marked as a calendar', page.evaluate("JSON.parse(localStorage.getItem('md.data')).source") == 'ical')
+    check('nothing was sent to Moodle or to the reminders Worker', len(calls) == n_calls and len(site_requests) == n_site and len(worker_calls) == n_worker)
+    page.screenshot(path=f'{SHOTS}/desktop-calendar.png')
+
+    page.reload(); page.wait_for_selector('.hero')
+    check('the calendar session survives a reload without a loader', page.locator('.card').count() == 3 and page.locator('.loading').count() == 0)
+    check('a reload does not call Moodle', len(calls) == n_calls and len(site_requests) == n_site)
+    page.locator('.card:has-text("Читання розділу 3") input[type=checkbox]').check()
+    page.set_input_files('header input[type=file]', cal_one)
+    page.wait_for_function("document.querySelectorAll('.card').length === 1")
+    check('choosing a new file replaces the tasks', page.inner_text('.card h3') == 'Новий звіт')
+    page.set_input_files('header input[type=file]', cal_main)
+    page.wait_for_function("document.querySelectorAll('.card').length === 3")
+    check('a tick made earlier is still there after the file is replaced twice', page.locator('.card:has-text("Читання розділу 3") input[type=checkbox]').is_checked())
+    page.locator('.card:has-text("Читання розділу 3") input[type=checkbox]').uncheck()
+    page.click('text=Вийти')
+    check('the logout dialog speaks about the file, not about a token', 'файл календаря' in page.inner_text('dialog.confirm') and 'Токен' not in page.inner_text('dialog.confirm'))
+    page.click('dialog .btn.danger')
+    page.wait_for_selector('main.login')
+    check('logout from calendar mode returns to the login screen and wipes the data', page.evaluate("localStorage.getItem('md.data')") is None)
 
     # 7. Phone
     m = b.new_context(viewport={'width': 390, 'height': 844}, device_scale_factor=3, is_mobile=True, has_touch=True, locale='uk-UA', timezone_id='Europe/Kyiv')

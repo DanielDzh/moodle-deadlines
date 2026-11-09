@@ -1,8 +1,9 @@
+import { CALENDAR_TEXTS } from '../config';
 import { fmtDayLong, fmtTime, taskWord, whenText } from '../lib/dates';
 import type { Board } from '../lib/board';
 import type { Course } from '../types';
 
-export function Summary({ board, courses }: { board: Board; courses: Map<number, Course> }) {
+export function Summary({ board, courses, calendar = false }: { board: Board; courses: Map<number, Course>; calendar?: boolean }) {
   const { next, in7, in31, overdue, total } = board.summary;
   const burning = !!next && board.isBurning(next);
 
@@ -39,7 +40,7 @@ export function Summary({ board, courses }: { board: Board; courses: Map<number,
         </div>
         {overdue > 0 && (
           <div className="bad">
-            <dt>прострочено й не подано</dt>
+            <dt>{calendar ? CALENDAR_TEXTS.overdue : 'прострочено й не подано'}</dt>
             <dd>{overdue}</dd>
           </div>
         )}
