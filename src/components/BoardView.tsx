@@ -112,14 +112,12 @@ export function BoardView({ snapshot, error, theme, onNextTheme, onLogout, remin
     <>
       {calendar && (
         <aside className="cal-notice" role="note">
-          <div className="cal-notice-inner">
-            <p>{CALENDAR_TEXTS.notice.text}</p>
-            {snapshot.base && (
-              <a href={`${snapshot.base}/my/courses.php`} target="_blank" rel="noopener noreferrer">
-                {CALENDAR_TEXTS.notice.link}
-              </a>
-            )}
-          </div>
+          <p>{CALENDAR_TEXTS.notice.text}</p>
+          {snapshot.base && (
+            <a href={`${snapshot.base}/my/courses.php`} target="_blank" rel="noopener noreferrer">
+              {CALENDAR_TEXTS.notice.link}
+            </a>
+          )}
         </aside>
       )}
       <div className="wrap">
