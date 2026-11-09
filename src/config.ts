@@ -179,7 +179,6 @@ export const CALENDAR_TEXTS = {
   overdue: 'прострочено, перевірте здачу',
   /** A permanent notice at the top of the board: the calendar cannot tell whether work was handed in. */
   notice: {
-    title: 'Перевірте здачу в Moodle самі',
     text: 'Календар не знає, чи ви вже здали роботу, тому всі завдання тут виглядають невиконаними. Перевірте в Moodle, особливо прострочені й ті, що горять, а здане позначайте галочкою.',
     link: 'Відкрити Moodle',
   },
